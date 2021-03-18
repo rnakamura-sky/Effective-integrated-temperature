@@ -10,15 +10,15 @@ DROP TABLE IF EXISTS Target;
 
 CREATE TABLE Target (
     Id INTEGER PRIMARY KEY autoincrement,
-    Name string NOT NULL,
+    Name string NOT NULL UNIQUE,
     Type INTEGER,
     Comment string
 );
 
-DROP TABLE IF EXISTS Tempreture;
+DROP TABLE IF EXISTS Temperature;
 
-CREATE TABLE Tempreture (
+CREATE TABLE Temperature (
     Id INTEGER PRIMARY KEY autoincrement,
     Date DATE NOT NULL UNIQUE,
-    Tempreture FLOAT
+    Temperature FLOAT
 );
