@@ -15,6 +15,7 @@ class TemperatureModel():
         self.date = date
         self.temp = temp
 
+
 class TargetTypeModel():
     """
     ターゲットのタイプを管理するためのモデル
@@ -23,6 +24,18 @@ class TargetTypeModel():
         self.id = id
         self.name = name
         self.comment = comment
+
+
+class TargetModel():
+    """
+    ターゲットを管理するためのモデル
+    """
+    def __init__(self, id:int=None, name:str='', type:TargetTypeModel=None, comment:str=''):
+        self.id = id
+        self.name = name
+        self.type = type
+        self.comment = comment
+
 
 def get_connection(db_name):
     """
@@ -44,6 +57,7 @@ def db_init(conn, schema_filename):
 
     conn.executescript(schema)
 
+
 def db_insert_default_values(conn):
     """
     データベースの初期化後にデフォルト値として設定しておく値を設定します。
@@ -62,6 +76,7 @@ def db_insert_default_values(conn):
     conn.commit()
 
     cursor.close()
+
 
 def insert_temperature(conn, data:TemperatureModel):
     """
@@ -87,6 +102,7 @@ def insert_temperature(conn, data:TemperatureModel):
     data.id = _id
     return data
 
+
 def get_target_types(conn):
     """
     ターゲットタイプの一覧を取得します。
@@ -104,3 +120,27 @@ def get_target_types(conn):
 
     return results
 
+
+def insert_target(conn, target):
+    """
+    ターゲットを登録します。
+    """
+    _id = -1
+    _name = target.name
+    _type = target.type.id
+    _comment = target.comment
+
+    cursor = conn.cursor()
+
+    cursor.execute(
+        'INSERT INTO Target(Name, Type, Comment) '
+        'VALUES (?, ?, ?);',
+        (_name, _type, _comment)
+    )
+    _id = cursor.lastrowid
+
+    conn.commit()
+    cursor.close()
+
+    target.id = _id
+    return target

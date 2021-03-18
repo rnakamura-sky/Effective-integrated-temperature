@@ -105,3 +105,40 @@ def test_get_target_type(get_db):
         assert target_type.name in ['植物', '虫']
         assert target_type.comment in ['植物につけるタイプ', '虫につけるタイプ']
     
+
+def test_insert_target(get_db):
+    """
+    ターゲット登録機能のテスト
+    """
+    target_id = -1
+    target_name = '桜'
+    target_type = None
+    target_comment = '桜'
+
+    conn = get_db
+    cursor = conn.cursor()
+
+    # ターゲットタイプが必要なのでターゲットタイプを取得
+    target_type_list = db.get_target_types(conn)
+
+    for _target_type in target_type_list:
+        if _target_type.name == '植物':
+            target_type = _target_type
+            break
+    assert target_type is not None
+
+    target = db.TargetModel(name=target_name, type=target_type, comment=target_comment)
+
+    db.insert_target(conn, target)
+
+    cursor.execute('SELECT * FROM Target Where Id = ?;', (target.id,))
+
+    result = dict(cursor.fetchone())
+
+    assert result['Id'] == target.id
+    assert result['Name'] == target.name
+    assert result['Type'] == target.type.id
+    assert result['Comment'] == target.comment
+
+    cursor.close()
+
