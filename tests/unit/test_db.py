@@ -69,6 +69,10 @@ def test_db_insert_default_values(get_db_no_init_data):
 
 
 def test_insert_temperature(get_db):
+    """
+    気温情報登録テスト
+    """
+
     date = datetime.date(2021, 3, 18)
     temp = 26.5
     test_data = db.TemperatureModel(date=date, temp=temp)
@@ -89,3 +93,15 @@ def test_insert_temperature(get_db):
 
     if cursor is not None:
         cursor.close()
+
+def test_get_target_type(get_db):
+    conn = get_db
+    target_type_list = db.get_target_types(conn)
+
+    assert len(target_type_list) == 2
+    for target_type in target_type_list:
+        assert isinstance(target_type, db.TargetTypeModel)
+        assert target_type.id in [1, 2]
+        assert target_type.name in ['植物', '虫']
+        assert target_type.comment in ['植物につけるタイプ', '虫につけるタイプ']
+    

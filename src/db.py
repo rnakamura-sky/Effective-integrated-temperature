@@ -7,10 +7,22 @@ from datetime import date
 
 
 class TemperatureModel():
+    """
+    気温情報を管理するためのモデル
+    """
     def __init__(self, id:int=None, date:date=None, temp:float=0.0) -> None:
         self.id = id
         self.date = date
         self.temp = temp
+
+class TargetTypeModel():
+    """
+    ターゲットのタイプを管理するためのモデル
+    """
+    def __init__(self, id:int=None, name:str='', comment:str=''):
+        self.id = id
+        self.name = name
+        self.comment = comment
 
 def get_connection(db_name):
     """
@@ -73,5 +85,22 @@ def insert_temperature(conn, data:TemperatureModel):
     cursor.close()
 
     data.id = _id
-
     return data
+
+def get_target_types(conn):
+    """
+    ターゲットタイプの一覧を取得します。
+    """
+    cursor = conn.cursor()
+
+    cursor.execute('SELECT * FROM TargetType;')
+    results = []
+    for row in cursor.fetchall():
+        data = dict(row)
+        target_type = TargetTypeModel(data['Id'], data['Name'], data['Comment'])
+        results.append(target_type)
+    
+    cursor.close()
+
+    return results
+
