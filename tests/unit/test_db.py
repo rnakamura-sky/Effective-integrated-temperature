@@ -4,6 +4,7 @@ db.pyのテスト
 """
 import os
 import datetime
+import random
 import db
 
 def test_sample():
@@ -153,18 +154,37 @@ def test_insert_target(get_db):
     cursor.close()
 
 
-# def get_temperature_info(get_db):
-#     """
-#     気温情報をＤＢから取得するメソッドテスト
-#     いろいろ考慮する必要がありそうですが、今はある日付以降
-#     のデータを取得するメソッドとします。
-#     """
-#     before_days = 60
-#     oneday = datetime.timedelta(days=1)
-#     current_date = datetime.date.today()
-#     days = []
-#     for i in range(60):
-#         temp
+def test_get_temperature_info(get_db):
+    """
+    気温情報をＤＢから取得するメソッドテスト
+    いろいろ考慮する必要がありそうですが、今はある日付以降
+    のデータを取得するメソッドとします。
+    """
+    before_days = 60
+    oneday = datetime.timedelta(days=1)
+    current_day = datetime.date.today()
+    base_day = current_day - oneday * before_days
+    temps = []
+    random.seed(0)
+    for i in range(60):
+        _d = current_day - oneday * i
+        _temp = random.uniform(-3.0, 25.0)
+        tm = db.TemperatureModel(date=_d, temp=_temp)
+        temps.append(tm)
 
+    temps = sorted(temps, key=lambda x:x.date)
+    
+    conn = get_db
+    for temp in temps:
+        db.insert_temperature(conn, temp)
+    
+    results = db.get_temperature_info(conn, base_day)
+
+    assert len(results) == before_days
+    for _t, _r in zip(temps, results):
+        assert _t.id == _r.id
+        assert _t.date == _r.date
+        assert _t.temp == _r.temp
+    
 
     

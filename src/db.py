@@ -148,3 +148,28 @@ def insert_target(conn, target):
 
     target.id = _id
     return target
+
+def get_temperature_info(conn, base_day:date):
+    """
+    気温情報の一覧を取得します。
+    """
+    cursor = conn.cursor()
+
+    cursor.execute(
+        'SELECT * '
+        'FROM Temperature '
+        'WHERE Date >= ? '
+        'ORDER BY Date ASC;',
+        (base_day,)
+    )
+    results = cursor.fetchall()
+
+    temps = []
+    for row in results:
+        _r = dict(row)
+        temp = TemperatureModel(_r['Id'], _r['Date'], _r['Temperature'])
+        temps.append(temp)
+
+    cursor.close()
+    
+    return temps
