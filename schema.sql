@@ -12,6 +12,8 @@ CREATE TABLE Target (
     Id INTEGER PRIMARY KEY autoincrement,
     Name string NOT NULL UNIQUE,
     Type INTEGER,
+    Base FLOAT,
+    Accumulation FLOAT,
     Comment string
 );
 

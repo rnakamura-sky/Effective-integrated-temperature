@@ -30,10 +30,12 @@ class TargetModel():
     """
     ターゲットを管理するためのモデル
     """
-    def __init__(self, id:int=None, name:str='', type:TargetTypeModel=None, comment:str=''):
+    def __init__(self, id:int=None, name:str='', type:TargetTypeModel=None, base:float=0.0, accum:float=0.0, comment:str=''):
         self.id = id
         self.name = name
         self.type = type
+        self.base = base
+        self.accum = accum
         self.comment = comment
 
 
@@ -128,14 +130,16 @@ def insert_target(conn, target):
     _id = -1
     _name = target.name
     _type = target.type.id
+    _base = target.base
+    _accum = target.accum
     _comment = target.comment
 
     cursor = conn.cursor()
 
     cursor.execute(
-        'INSERT INTO Target(Name, Type, Comment) '
-        'VALUES (?, ?, ?);',
-        (_name, _type, _comment)
+        'INSERT INTO Target(Name, Type, Base, Accumulation, Comment) '
+        'VALUES (?, ?, ?, ?, ?);',
+        (_name, _type, _base, _accum, _comment)
     )
     _id = cursor.lastrowid
 

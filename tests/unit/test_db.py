@@ -113,6 +113,8 @@ def test_insert_target(get_db):
     target_id = -1
     target_name = '桜'
     target_type = None
+    target_base = 10.0
+    target_accum = 400.0
     target_comment = '桜'
 
     conn = get_db
@@ -127,7 +129,12 @@ def test_insert_target(get_db):
             break
     assert target_type is not None
 
-    target = db.TargetModel(name=target_name, type=target_type, comment=target_comment)
+    target = db.TargetModel(
+        name=target_name,
+        type=target_type,
+        base=target_base,
+        accum=target_accum,
+        comment=target_comment)
 
     db.insert_target(conn, target)
 
@@ -138,7 +145,26 @@ def test_insert_target(get_db):
     assert result['Id'] == target.id
     assert result['Name'] == target.name
     assert result['Type'] == target.type.id
+    assert result['Base'] == target.base
+    assert result['Accumulation'] == target.accum
     assert result['Comment'] == target.comment
+
 
     cursor.close()
 
+
+# def get_temperature_info(get_db):
+#     """
+#     気温情報をＤＢから取得するメソッドテスト
+#     いろいろ考慮する必要がありそうですが、今はある日付以降
+#     のデータを取得するメソッドとします。
+#     """
+#     before_days = 60
+#     oneday = datetime.timedelta(days=1)
+#     current_date = datetime.date.today()
+#     days = []
+#     for i in range(60):
+#         temp
+
+
+    
