@@ -12,6 +12,9 @@ temperature_datas = [
     (datetime.date(year=2021, month=3, day=5), 9.5),
     (datetime.date(year=2021, month=1, day=20), 7.4),
     (datetime.date(year=2020, month=10, day=29), 15.1),
+    (datetime.date(year=2019, month=12, day=20), 9.5),
+    (datetime.date(year=2020, month=10, day=27), 14.4),
+    (datetime.date(year=2021, month=1, day=9), -1.6),
 ]
 
 

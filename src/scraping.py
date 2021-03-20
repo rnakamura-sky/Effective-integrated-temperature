@@ -3,6 +3,7 @@
 スクレイピングして気温を取得する機能
 """
 import datetime
+import re
 import requests
 from bs4 import BeautifulSoup
 
@@ -41,6 +42,12 @@ def fetch_temperature(day:datetime.date=None) -> float:
     row = rows[row_idx]
 
     average = row.select('td.data_0_0')[average_idx].string
+
+    pattern = '^-{0,1}(\d+)\D.*$'
+    matcher = re.compile(pattern)
+    match = matcher.match(average)
+
+    average = match.group(1)
 
 
     return float(average)
