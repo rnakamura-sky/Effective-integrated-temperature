@@ -11,7 +11,8 @@ def fetch_temperature(day:datetime.date=None) -> float:
     指定した日付の情報を取得します。
     """
 
-    load_url = 'https://www.data.jma.go.jp/obd/stats/etrn/view/daily_s1.php?prec_no=49&block_no=47638&year=2021&month=3&day=14&view='
+    # load_url_template = 'https://www.data.jma.go.jp/obd/stats/etrn/view/daily_s1.php?prec_no=49&block_no=47638&year=2021&month=3&day=14&view='
+    load_url_template = 'https://www.data.jma.go.jp/obd/stats/etrn/view/daily_s1.php?prec_no=49&block_no=47638&year={}&month={}&day={}&view='
     proxies = {
         'http': '',
         'https': ''
@@ -24,6 +25,8 @@ def fetch_temperature(day:datetime.date=None) -> float:
     year = day.year
     month = day.month
     day = day.day
+
+    load_url = load_url_template.format(year, month, day)
     data_start_row = 4
     average_idx = 5
 
