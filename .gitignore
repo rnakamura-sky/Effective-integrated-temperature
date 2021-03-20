@@ -154,3 +154,6 @@ Thumbs.db #thumbnail cache on Windows
 # Python以外の設定
 ## VSCodeの設定ファイルは読み込まないようにする
 .vscode
+
+# 使い方のわからないパッケージの確認をsampleというフォルダに格納してアップしないようにします。
+sample
