@@ -173,3 +173,36 @@ def get_temperature_info(conn, base_day:date):
     cursor.close()
     
     return temps
+
+def get_targets(conn):
+    """
+    ターゲットの一覧を取得します。
+    """
+
+    # 先にターゲットタイプを取得しておきます。
+    target_types = get_target_types(conn)
+    # 扱いやすいようdictに変換
+    target_type_dict = {t.id: t for t in target_types}
+
+    cursor = conn.cursor()
+
+    cursor.execute('SELECT * FROM Target;')
+    results = []
+    for row in cursor.fetchall():
+        data = dict(row)
+        target_type = target_type_dict[data['Type']]
+        target = TargetModel(
+            id=data['Id'],
+            name=data['Name'],
+            type=target_type,
+            base=data['Base'],
+            accum=data['Accumulation'],
+            comment=data['Comment'],
+        )
+        results.append(target)
+    
+    cursor.close()
+
+    return results
+
+

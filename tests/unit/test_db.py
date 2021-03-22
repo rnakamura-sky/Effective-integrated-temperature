@@ -95,7 +95,7 @@ def test_insert_temperature(get_db):
     if cursor is not None:
         cursor.close()
 
-def test_get_target_type(get_db):
+def test_get_target_types(get_db):
     conn = get_db
     target_type_list = db.get_target_types(conn)
 
@@ -150,8 +150,40 @@ def test_insert_target(get_db):
     assert result['Accumulation'] == target.accum
     assert result['Comment'] == target.comment
 
-
     cursor.close()
+
+def test_get_targets(get_db):
+    """
+    ターゲット一覧取得メソッドテスト
+    """
+    conn = get_db
+    target_types = db.get_target_types(conn)
+    count = 0
+    target_datas = [
+        db.TargetModel(name='TEST1', type=target_types[0], base=10.0, accum=300.0, comment='TEST1'),
+        db.TargetModel(name='TEST2', type=target_types[0], base=10.0, accum=300.0, comment='TEST2'),
+        db.TargetModel(name='TEST3', type=target_types[1], base=10.0, accum=300.0, comment='TEST3'),
+        db.TargetModel(name='TEST4', type=target_types[1], base=10.0, accum=300.0, comment='TEST4'),
+    ]
+    for t in target_datas:
+        db.insert_target(conn, t)
+    target_dict = dict()
+    for t in target_datas:
+        target_dict[t.id] = t
+    
+    target_list = db.get_targets(conn)
+
+    assert len(target_list) == len(target_dict)
+    for target in target_list:
+        _temp = target_dict.get(target.id)
+        assert _temp is not None
+        assert target.name == _temp.name
+        assert target.type.id == _temp.type.id
+        assert target.base == _temp.base
+        assert target.accum == _temp.accum
+        assert target.comment == _temp.comment
+    
+
 
 
 def test_get_temperature_info(get_db):
