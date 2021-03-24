@@ -1,4 +1,5 @@
 pytest
 requests
 beautifulsoup4
-wxpython
+pandas
+wxPython

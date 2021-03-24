@@ -10,33 +10,42 @@ class TemperatureModel():
     """
     気温情報を管理するためのモデル
     """
-    def __init__(self, id:int=None, date:date=None, temp:float=0.0) -> None:
+    def __init__(self, id:int=-1, date:date=None, temp:float=0.0) -> None:
         self.id = id
         self.date = date
         self.temp = temp
+    
+    def __str__(self):
+        return f'Id:{self.id} Date:{self.date} Temp:{self.temp}'
 
 
 class TargetTypeModel():
     """
     ターゲットのタイプを管理するためのモデル
     """
-    def __init__(self, id:int=None, name:str='', comment:str=''):
+    def __init__(self, id:int=-1, name:str='', comment:str=''):
         self.id = id
         self.name = name
         self.comment = comment
+    
+    def __str__(self):
+        return f'Id:{self.id} Name:{self.name} Comment:{self.comment}'
 
 
 class TargetModel():
     """
     ターゲットを管理するためのモデル
     """
-    def __init__(self, id:int=None, name:str='', type:TargetTypeModel=None, base:float=0.0, accum:float=0.0, comment:str=''):
+    def __init__(self, id:int=-1, name:str='', type:TargetTypeModel=None, base:float=0.0, accum:float=0.0, comment:str=''):
         self.id = id
         self.name = name
         self.type = type
         self.base = base
         self.accum = accum
         self.comment = comment
+    
+    def __str__(self):
+        return f'Id:{self.id} Name:{self.name} Type:{self.type.name} Base:{self.base} Accum:{self.accum} Comment:{self.comment}'
 
 
 def get_connection(db_name):
