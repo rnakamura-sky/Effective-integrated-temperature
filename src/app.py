@@ -8,14 +8,15 @@ import os
 import pandas as pd
 import wx
 import wx.grid
+import wx.lib.scrolledpanel
 import db
 from db import get_connection, db_init, insert_temperature, TemperatureModel, db_insert_default_values
 import scraping
 
 
 class MainFrame(wx.Frame):
-    def __init__(self, *args):
-        wx.Frame.__init__(self, *args)
+    def __init__(self, *args, **kw):
+        wx.Frame.__init__(self, *args, **kw)
 
 class TemperatureTableGrid(wx.grid.Grid):
     """
@@ -38,8 +39,9 @@ class TemperatureTableGrid(wx.grid.Grid):
                 self.SetCellValue(i, j, str(cell))
         self.SetRowLabelAlignment(wx.ALIGN_LEFT, wx.ALIGN_CENTER)
 
-        # self.SetRowLabelSize(0)
+        self.SetRowLabelSize(0)
         self.AutoSize()
+
 
 
 def init_temperature(conn, proxies=None):
@@ -137,8 +139,31 @@ if __name__ == '__main__':
 
     # アプリケーション起動
     app = wx.App()
-    frame = MainFrame(None, -1, 'Sample')
-    table = TemperatureTableGrid(frame, table_data)
+    frame = MainFrame(None, -1, 'Sample', size=(699, 400))
+
+    layout = wx.BoxSizer(wx.VERTICAL)
+    panel_message = wx.Panel(frame, -1)
+    panel_message.SetBackgroundColour((255, 255, 255))
+    layout.Add(panel_message)
+    button_temperature = wx.Button(panel_message, wx.ID_ANY, 'update')
+
+    layout_table = wx.BoxSizer(wx.VERTICAL)
+    # panel_table = wx.Panel(frame, -1)
+    panel_table = wx.lib.scrolledpanel.ScrolledPanel(frame, -1, style=wx.SIMPLE_BORDER)
+    panel_table.SetupScrolling()
+    panel_table.SetBackgroundColour((200, 200, 200))
+    layout.Add(panel_table, proportion=1, flag=wx.EXPAND)
+
+    table = TemperatureTableGrid(panel_table, table_data)
+    # table = TemperatureTableGrid(frame, table_data)
     table.FreezeTo(row=1, col=4)
+    layout_table.Add(table, flag=wx.EXPAND)
+    # layout.Add(table)
+
+    panel_table.SetSizer(layout_table)
+
+    frame.SetSizer(layout)
+    # layout.Fit(frame)
+
     frame.Show()
     app.MainLoop()
