@@ -245,6 +245,13 @@ class Controller():
 
         self.targets = None
         self.table_data = None
+    
+    def delete_target(self, target_id):
+        conn = self.conn
+        db.delete_target(conn, target_id)
+
+        self.targets = None
+        self.table_data = None
 
 
 class TargetAddDialog(wx.Dialog):
@@ -315,11 +322,18 @@ class TargetUpdateDialog(wx.Dialog):
         button_ok = wx.Button(self, wx.ID_OK)
         button_ok.SetDefault()
         button_cancel = wx.Button(self, wx.ID_CANCEL)
+        button_delete = wx.Button(self, wx.ID_DELETE)
+        button_delete.Bind(wx.EVT_BUTTON, self.close_dialog)
 
-        button_sizer = wx.StdDialogButtonSizer()
-        button_sizer.AddButton(button_ok)
-        button_sizer.AddButton(button_cancel)
-        button_sizer.Realize()
+        # button_sizer = wx.StdDialogButtonSizer()
+        # button_sizer.AddButton(button_ok)
+        # button_sizer.AddButton(button_cancel)
+        # button_sizer.AddButton(button_delete)
+        # button_sizer.Realize()
+        button_sizer = wx.BoxSizer(wx.HORIZONTAL)
+        button_sizer.Add(button_ok)
+        button_sizer.Add(button_cancel)
+        button_sizer.Add(button_delete)
 
         sizer = wx.BoxSizer(wx.VERTICAL)
         sizer.Add(self.text_name, 0, wx.EXPAND)
@@ -330,9 +344,13 @@ class TargetUpdateDialog(wx.Dialog):
 
         sizer.Add(button_sizer, 0, wx.EXPAND)
         self.SetSizer(sizer)
+    
+    def close_dialog(self, event):
+        self.SetReturnCode(wx.ID_DELETE)
+        self.EndModal(wx.ID_DELETE)
+        # self.Close(True)
 
     def get_data(self):
-        print(self.combo_type.GetSelection())
         if self.combo_type.GetSelection() > -1:
             _type = self.combo_type.GetClientData(self.combo_type.GetSelection())
         else:
@@ -478,6 +496,12 @@ class MainFrame(wx.Frame):
                 break
             wx.MessageBox('入力エラーがあります', '入力エラー')
             result = dialog.ShowModal()
+        print(result)
+        if result == wx.ID_DELETE:
+            delete_data = dialog.get_data()
+            delete_target_id = delete_data['id']
+            self.controller.delete_target(delete_target_id)
+            self.update_show_data()
         dialog.Destroy()
 
     
