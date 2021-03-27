@@ -95,9 +95,33 @@ def test_insert_temperature(get_db):
     if cursor is not None:
         cursor.close()
 
-def test_get_target_types(get_db):
+def test_get_target_type(get_db):
     """
     ターゲットタイプ取得機能テスト
+    """
+    _id = -1
+    name = 'TEST TYPE'
+    comment = 'TEST TYPE COMMENT'
+
+    conn = get_db
+    cursor = conn.cursor()
+
+    cursor.execute(
+        'INSERT INTO TargetType(Name, Comment) VALUES (?, ?);',
+        (name, comment))
+    _id = cursor.lastrowid
+    conn.commit()
+    cursor.close()
+
+    result = db.get_target_type(conn, _id)
+    assert isinstance(result, db.TargetTypeModel)
+    assert result.id == _id
+    assert result.name == name
+    assert result.comment == comment
+
+def test_get_target_types(get_db):
+    """
+    ターゲットタイプ一覧取得機能テスト
     """
     conn = get_db
     target_type_list = db.get_target_types(conn)
@@ -152,6 +176,54 @@ def test_insert_target(get_db):
     assert result['Base'] == target.base
     assert result['Accumulation'] == target.accum
     assert result['Comment'] == target.comment
+
+    cursor.close()
+
+
+def test_get_target(get_db):
+    """
+    ターゲット登録機能のテスト
+    """
+    _name = '桜'
+    _type_id = -1
+    _base = 10.0
+    _accum = 400.0
+    _comment = '桜'
+
+    conn = get_db
+    cursor = conn.cursor()
+
+    target_type = None
+
+    # ターゲットタイプが必要なのでターゲットタイプを取得
+    target_type_list = db.get_target_types(conn)
+
+    for _target_type in target_type_list:
+        if _target_type.name == '植物':
+            target_type = _target_type
+            break
+    assert target_type is not None
+
+    target = db.TargetModel(
+        name=_name,
+        type=target_type,
+        base=_base,
+        accum=_accum,
+        comment=_comment)
+
+    db.insert_target(conn, target)
+
+    _id = target.id
+
+    result = db.get_target(conn, _id)
+
+    assert isinstance(result, db.TargetModel)
+    assert result.id == target.id
+    assert result.name == target.name
+    assert result.type.id == target.type.id
+    assert result.base == target.base
+    assert result.accum == target.accum
+    assert result.comment == target.comment
 
     cursor.close()
 

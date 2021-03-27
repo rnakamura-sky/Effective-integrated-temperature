@@ -113,6 +113,25 @@ def insert_temperature(conn, data:TemperatureModel):
     data.id = _id
     return data
 
+def get_target_type(conn, id):
+    """
+    ターゲットタイプを取得します。
+    """
+    cursor = conn.cursor()
+
+    cursor.execute(
+        'SELECT * '
+        'FROM TargetType '
+        'WHERE Id = ?;',
+        (id,))
+    result = cursor.fetchone()
+    target_type = TargetTypeModel(
+        id=result['Id'],
+        name=result['Name'],
+        comment=result['Comment']
+    )
+    cursor.close()
+    return target_type
 
 def get_target_types(conn):
     """
@@ -180,6 +199,34 @@ def update_target(conn, target):
     conn.commit()
     cursor.close()
 
+    return target
+
+def get_target(conn, id):
+    """
+    ターゲットを取得する
+    """
+    cursor = conn.cursor()
+
+    cursor.execute(
+        'SELECT * '
+        'FROM Target '
+        'WHERE Id = ?;',
+        (id,)
+    )
+    result = cursor.fetchone()
+
+    target_type = get_target_type(conn, result['Type'])
+
+    target = TargetModel(
+        id=result['Id'],
+        name=result['Name'],
+        type=target_type,
+        base=result['Base'],
+        accum=result['Accumulation'],
+        comment=result['Comment']
+    )
+
+    cursor.close()
     return target
 
 def get_temperature_info(conn, base_day:date):
