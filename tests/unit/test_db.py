@@ -291,6 +291,33 @@ def test_update_target(get_db):
 
     cursor.close()
 
+def test_delete_targets(get_db):
+    """
+    ターゲット削除機能テスト
+    """
+    conn = get_db
+    target_type = db.get_target_type(conn, id=1)
+    target = db.TargetModel(
+        id=-1,
+        name='TEST TARGET',
+        type=target_type,
+        base=0.0,
+        accum=100.0,
+        comment='TEST'
+    )
+    db.insert_target(conn, target)
+    assert target.id > 0
+
+    db.delete_target(conn, target.id)
+
+    cursor = conn.cursor()
+    cursor.execute('SELECT * FROM Target WHERE Id = ?', (target.id,))
+    result = cursor.fetchone()
+    
+    assert result is None
+    cursor.close()
+
+
 def test_get_targets(get_db):
     """
     ターゲット一覧取得メソッドテスト

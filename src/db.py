@@ -177,6 +177,19 @@ def insert_target(conn, target):
     target.id = _id
     return target
 
+def delete_target(conn, target_id):
+    """
+    指定されたターゲットを削除します。
+    """
+    cursor = conn.cursor()
+    cursor.execute(
+        'DELETE FROM Target WHERE Id = ?', (target_id,)
+    )
+    conn.commit()
+    cursor.close()
+
+    return True
+
 def update_target(conn, target):
     """
     ターゲットを更新します。
