@@ -150,6 +150,9 @@ class Controller():
             self.targets = db.get_targets(self.conn)
         return self.targets
     
+    def get_target(self, target_id):
+        return db.get_target(self.conn, target_id)
+    
     def get_target_types(self):
         if self.target_types is None:
             self.target_tyes = db.get_target_types(self.conn)
@@ -234,6 +237,14 @@ class Controller():
         
         self.targets = None
         self.table_data = None
+    
+    def update_target(self, data:dict):
+        conn = self.conn
+        target = db.TargetModel(**data)
+        db.update_target(conn, target)
+
+        self.targets = None
+        self.table_data = None
 
 
 class TargetAddDialog(wx.Dialog):
@@ -284,6 +295,58 @@ class TargetAddDialog(wx.Dialog):
         }
         return result_data
 
+class TargetUpdateDialog(wx.Dialog):
+    def __init__(self, controller, target):
+        wx.Dialog.__init__(self, None, -1, '更新', size=(400, 300))
+        target_types = controller.get_target_types()
+
+        self.target_id = target.id
+
+        self.text_name = wx.TextCtrl(self, -1, target.name)
+        self.combo_type = wx.ComboBox(self, wx.ID_ANY, '', style=wx.CB_READONLY)
+        for target_type in target_types:
+            self.combo_type.Append(target_type.name ,target_type)
+        self.combo_type.SetStringSelection(target.type.name)
+
+        self.spind_base = wx.SpinCtrlDouble(self, wx.ID_ANY, inc=0.1, min=-30.0, max=40.0, value=str(target.base))
+        self.spind_accum = wx.SpinCtrlDouble(self, wx.ID_ANY, inc=0.1, min=0.0, max=10000.0, value=str(target.accum))
+        self.text_comment = wx.TextCtrl(self, -1, target.comment)
+
+        button_ok = wx.Button(self, wx.ID_OK)
+        button_ok.SetDefault()
+        button_cancel = wx.Button(self, wx.ID_CANCEL)
+
+        button_sizer = wx.StdDialogButtonSizer()
+        button_sizer.AddButton(button_ok)
+        button_sizer.AddButton(button_cancel)
+        button_sizer.Realize()
+
+        sizer = wx.BoxSizer(wx.VERTICAL)
+        sizer.Add(self.text_name, 0, wx.EXPAND)
+        sizer.Add(self.combo_type, 0, wx.EXPAND)
+        sizer.Add(self.spind_base, 0, wx.EXPAND)
+        sizer.Add(self.spind_accum, 0, wx.EXPAND)
+        sizer.Add(self.text_comment, 0, wx.EXPAND)
+
+        sizer.Add(button_sizer, 0, wx.EXPAND)
+        self.SetSizer(sizer)
+
+    def get_data(self):
+        print(self.combo_type.GetSelection())
+        if self.combo_type.GetSelection() > -1:
+            _type = self.combo_type.GetClientData(self.combo_type.GetSelection())
+        else:
+            _type = None
+        result_data = {
+            'id': self.target_id,
+            'name': self.text_name.GetValue(),
+            'type': _type,
+            'base': self.spind_base.GetValue(),
+            'accum': self.spind_accum.GetValue(),
+            'comment': self.text_comment.GetValue(),
+        }
+        return result_data
+
 class MainFrame(wx.Frame):
     def __init__(self, parent, id, title, size, controller, debug=False):
         wx.Frame.__init__(self, parent, id, title, size=size)
@@ -325,6 +388,7 @@ class MainFrame(wx.Frame):
 
         self.table = TemperatureTableGrid(self.panel_table, table_data)
         self.table.freeze_table(row=1, col=4)
+        self.table.Bind(wx.grid.EVT_GRID_CELL_LEFT_DCLICK, self.update_target)
 
         # layout設定 ############################################
         # panel_h_messageのレイアウト設定
@@ -396,6 +460,26 @@ class MainFrame(wx.Frame):
             wx.MessageBox('入力エラーがあります', '入力エラー')
             result = dialog.ShowModal()
         dialog.Destroy()
+    
+    def update_target(self, event):
+        row = event.GetRow()
+        if row == 0:
+            return
+        
+        target_id = int(self.table.GetRowLabelValue(row))
+        target = self.controller.get_target(target_id)
+        dialog = TargetUpdateDialog(self.controller, target)
+        result = dialog.ShowModal()
+        while result == wx.ID_OK:
+            update_data = dialog.get_data()
+            if target_data_check(update_data):
+                self.controller.update_target(update_data)
+                self.update_show_data()
+                break
+            wx.MessageBox('入力エラーがあります', '入力エラー')
+            result = dialog.ShowModal()
+        dialog.Destroy()
+
     
     def update_show_data(self):
         table_data = self.controller.get_table_data()
