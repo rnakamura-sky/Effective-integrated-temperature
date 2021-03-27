@@ -96,6 +96,9 @@ def test_insert_temperature(get_db):
         cursor.close()
 
 def test_get_target_types(get_db):
+    """
+    ターゲットタイプ取得機能テスト
+    """
     conn = get_db
     target_type_list = db.get_target_types(conn)
 
@@ -149,6 +152,70 @@ def test_insert_target(get_db):
     assert result['Base'] == target.base
     assert result['Accumulation'] == target.accum
     assert result['Comment'] == target.comment
+
+    cursor.close()
+
+def test_update_target(get_db):
+    """
+    ターゲット更新機能のテスト
+    """
+    target_id = -1
+    target_name = '桜'
+    target_type = None
+    target_base = 10.0
+    target_accum = 400.0
+    target_comment = '桜'
+
+    update_target_name = 'さくら'
+    update_target_type = None
+    update_target_base = 20.0
+    update_target_accum = 600.0
+    update_target_comment = 'さくら'
+
+    conn = get_db
+    cursor = conn.cursor()
+
+    # ターゲットタイプが必要なのでターゲットタイプを取得
+    target_type_list = db.get_target_types(conn)
+
+    for _target_type in target_type_list:
+        if _target_type.name == '植物':
+            target_type = _target_type
+        if _target_type.name == '虫':
+            update_target_type = _target_type
+    assert target_type is not None
+    assert update_target_type is not None
+
+    target = db.TargetModel(
+        name=target_name,
+        type=target_type,
+        base=target_base,
+        accum=target_accum,
+        comment=target_comment)
+    db.insert_target(conn, target)
+
+    ## ここからテスト
+    update_target = db.TargetModel(
+        id=target.id,
+        name=update_target_name,
+        type=update_target_type,
+        base=update_target_base,
+        accum=update_target_accum,
+        comment=update_target_comment,
+    )
+
+    db.update_target(conn, update_target)
+
+    cursor.execute('SELECT * FROM Target Where Id = ?;', (target.id,))
+
+    result = dict(cursor.fetchone())
+
+    assert result['Id'] == target.id
+    assert result['Name'] == update_target.name
+    assert result['Type'] == update_target.type.id
+    assert result['Base'] == update_target.base
+    assert result['Accumulation'] == update_target.accum
+    assert result['Comment'] == update_target.comment
 
     cursor.close()
 

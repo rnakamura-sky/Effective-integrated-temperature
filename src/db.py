@@ -158,6 +158,30 @@ def insert_target(conn, target):
     target.id = _id
     return target
 
+def update_target(conn, target):
+    """
+    ターゲットを更新します。
+    """
+    _id = target.id
+    _name = target.name
+    _type = target.type.id
+    _base = target.base
+    _accum = target.accum
+    _comment = target.comment
+
+    cursor = conn.cursor()
+
+    cursor.execute(
+        'UPDATE Target '
+        'SET Name = ?, Type = ?, Base = ?, Accumulation = ?, Comment = ? '
+        'WHERE Id = ?;',
+        (_name, _type, _base, _accum, _comment, _id)
+    )
+    conn.commit()
+    cursor.close()
+
+    return target
+
 def get_temperature_info(conn, base_day:date):
     """
     気温情報の一覧を取得します。
