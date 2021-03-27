@@ -424,8 +424,8 @@ if __name__ == '__main__':
     debug = True
 
     proxies = {
-        'http': os.environ['http_proxy'],
-        'https': os.environ['https_proxy'],
+        'http': os.environ.get('http_proxy'),
+        'https': os.environ.get('https_proxy'),
     }
 
     # 基準となる日付を取得
