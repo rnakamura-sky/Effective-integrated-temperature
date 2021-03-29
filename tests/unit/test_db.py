@@ -554,7 +554,61 @@ def test_update_target_data(get_db):
     assert result['Comment'] == update_target_data.comment
 
 
+def test_delete_target_data(get_db):
+    """
+    ターゲットデータ削除機能テスト
+    """
+    conn = get_db
+    target_type = db.get_target_type(conn, id=1)
+    target_data1 = db.TargetDataModel(
+        id=-1,
+        target=None,
+        refer=None,
+        state='TEST1',
+        base=0.0,
+        accum=100.0,
+        comment='TEST1'
+    )
+    target_data2 = db.TargetDataModel(
+        id=-1,
+        target=None,
+        refer=None,
+        state='TEST2',
+        base=10.0,
+        accum=110.0,
+        comment='TEST2'
+    )
+    target = db.TargetModel(
+        id=-1,
+        name='TEST TARGET',
+        type=target_type,
+        datas=[target_data1, target_data2],
+        comment='TEST'
+    )
+    target_data1.target = target
+    target_data2.target = target
 
+    db.insert_target(conn, target)
+
+
+    db.delete_target_data(conn, target_data1)
+
+    cursor = conn.cursor()
+    cursor.execute(
+        'SELECT * FROM TargetData WHERE Target = ?;',
+        (target.id, )
+    )
+    results = cursor.fetchall()
+
+    assert len(results) == 1
+    result = results[0]
+    assert result['Id'] == target_data2.id
+    assert result['Target'] == target_data2.target.id
+    assert result['Reference'] is None
+    assert result['State'] == target_data2.state
+    assert result['Base'] == target_data2.base
+    assert result['Accumulation'] == target_data2.accum
+    assert result['Comment'] == target_data2.comment
 
 def test_get_temperature_info(get_db):
     """
