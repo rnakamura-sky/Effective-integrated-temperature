@@ -98,7 +98,7 @@ class TemperatureTableGrid(wx.grid.Grid):
             base = row[1][1]
             accum = row[1][2]
             temp_sum = row[1][3]
-            temp_sum_before_10days = sum(row[1][-10:])
+            temp_sum_before_10days = row[1][-10]
             alert_temp = 10.0
             print(base, accum, temp_sum, temp_sum_before_10days)
 
@@ -107,18 +107,24 @@ class TemperatureTableGrid(wx.grid.Grid):
                 colour = (200, 255, 255)
             elif accum > temp_sum and accum < temp_sum + alert_temp:
                 colour = (255, 255, 100)
-            elif accum <= temp_sum and accum > temp_sum - temp_sum_before_10days:
+            elif accum <= temp_sum and accum > temp_sum_before_10days:
                 colour = (255, 200, 200)
             elif accum <= temp_sum:
                 colour = (100, 100, 100)
 
             self.SetRowLabelValue(i, str(row[0]))
+            is_over_accum = False
             for j, cell in enumerate(row[1]):
                 self.SetCellValue(i, j, str(cell))
                 self.SetReadOnly(i, j, True)
 
                 # 色付け
-                self.SetCellBackgroundColour(i, j, colour)
+                
+                if not is_over_accum and i > 1 and j > 3 and float(cell) >= float(accum):
+                    self.SetCellBackgroundColour(i, j, wx.Colour("ORANGE"))
+                    is_over_accum = True
+                else:
+                    self.SetCellBackgroundColour(i, j, colour)
 
     
     def freeze_table(self, row:int, col:int):
@@ -184,8 +190,13 @@ def calc_table_data(targets, temperatures) -> pd.DataFrame:
 
     for target in targets:
         for target_data in target.datas:
-            target_temp_list = [round(t - target_data.base, 1) if t > target_data.base else 0.0 for t in temp_list]
-            row_target = [target.name, target_data.base, target_data.accum, round(sum(target_temp_list), 1)] + target_temp_list
+            target_temp_list = [0.0 for i in range(len(temp_list))]
+            sum_value = 0.0
+            for i, temp in enumerate(temp_list):
+                sum_value = sum_value + (temp - target_data.base) if temp > target_data.base else sum_value
+                target_temp_list[i] = round(sum_value, 1)
+
+            row_target = [target.name, target_data.base, target_data.accum, round(target_temp_list[-1], 1)] + target_temp_list
             df.loc[target.id] = row_target
     return df
 
