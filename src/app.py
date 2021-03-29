@@ -14,6 +14,42 @@ from db import get_connection, db_init, insert_temperature, TemperatureModel, db
 import scraping
 
 
+def create_default_target(conn):
+    """
+    初期値として、ターゲットを追加します。
+    植物を育てる時に害虫となる虫を追加しています。
+    """
+
+    # target_type取得
+    target_types = db.get_target_types(conn)
+    target_type_dict = {tt.name: tt for tt in target_types}
+    target_list = [
+        db.TargetModel(name='ブドウトラカミキリ　卵～',                    type=target_type_dict['虫'], base=9.7, accum=114.1, comment='ブドウトラカミキリ　卵～'),
+        db.TargetModel(name='ブドウトラカミキリ　卵～成虫羽化',             type=target_type_dict['虫'], base=8.0, accum=408.4, comment='ブドウトラカミキリ　卵～成虫羽化'),
+        db.TargetModel(name='クワコナカイガラムシ　卵～',                  type=target_type_dict['虫'], base=12.3, accum=127.0, comment='クワコナカイガラムシ　卵～'),
+        db.TargetModel(name='クワコナカイガラムシ　雌幼虫～成虫羽化',       type=target_type_dict['虫'], base=10.8, accum=346.0, comment='クワコナカイガラムシ　雌幼虫～成虫羽化'),
+        db.TargetModel(name='クワコナカイガラムシ　幼虫～産卵前期',         type=target_type_dict['虫'], base=9.7, accum=549.0, comment='クワコナカイガラムシ　幼虫～産卵前期'),
+        db.TargetModel(name='ミカンキイロアザミウマ　卵～',                 type=target_type_dict['虫'], base=9.2, accum=50.0, comment='ミカンキイロアザミウマ　卵～'),
+        db.TargetModel(name='ミカンキイロアザミウマ　幼虫～蛹',             type=target_type_dict['虫'], base=9.0, accum=90.3, comment='ミカンキイロアザミウマ　幼虫～蛹'),
+        db.TargetModel(name='ミカンキイロアザミウマ　蛹～羽化',              type=target_type_dict['虫'], base=9.8, accum=66.7, comment='ミカンキイロアザミウマ　蛹～羽化'),
+        db.TargetModel(name='ミカンキイロアザミウマ　幼虫～成虫羽化',        type=target_type_dict['虫'], base=9.5, accum=194.0, comment='ミカンキイロアザミウマ　幼虫～成虫羽化'),
+        db.TargetModel(name='チャノキイロアザミウマ（大阪）　卵～',          type=target_type_dict['虫'], base=9.5, accum=119.0, comment='チャノキイロアザミウマ（大阪）　卵～'),
+        db.TargetModel(name='チャノキイロアザミウマ（大阪）　幼虫～成虫羽化', type=target_type_dict['虫'], base=7.7, accum=181.8, comment='チャノキイロアザミウマ（大阪）　幼虫～成虫羽化'),
+        db.TargetModel(name='チャノキイロアザミウマ（静岡）　卵～成虫羽化',   type=target_type_dict['虫'], base=9.7, accum=265.0, comment='チャノキイロアザミウマ（静岡）　卵～成虫羽化'),
+        db.TargetModel(name='フタテンヒメヨコバイ　卵～',                   type=target_type_dict['虫'], base=10.8, accum=125.0, comment='フタテンヒメヨコバイ　卵～'),
+        db.TargetModel(name='フタテンヒメヨコバイ　幼虫～成虫羽化',          type=target_type_dict['虫'], base=13.0, accum=200.0, comment='フタテンヒメヨコバイ　幼虫～成虫羽化'),
+        db.TargetModel(name='フタテンヒメヨコバイ　卵～成虫羽化',            type=target_type_dict['虫'], base=11.0, accum=333.0, comment='フタテンヒメヨコバイ　卵～成虫羽化'),
+        db.TargetModel(name='コウモリガ　卵～',                            type=target_type_dict['虫'], base=6.7, accum=200.0, comment='コウモリガ　卵～'),
+        db.TargetModel(name='コウモリガ　卵～4齢幼虫',                      type=target_type_dict['虫'], base=7.2, accum=390.0, comment='コウモリガ　卵～4齢幼虫'),
+        db.TargetModel(name='ハスモンヨトウ　卵～',                         type=target_type_dict['虫'], base=10.1, accum=63.7, comment='ハスモンヨトウ　卵～'),
+        db.TargetModel(name='ハスモンヨトウ　卵～成虫羽化',                  type=target_type_dict['虫'], base=10.3, accum=526.3, comment='ハスモンヨトウ　卵～成虫羽化'),
+        db.TargetModel(name='ハスモンヨトウ　卵～卵',                       type=target_type_dict['虫'], base=10.3, accum=628.7, comment='ハスモンヨトウ　卵～'),
+    ]
+
+    for target in target_list:
+        db.insert_target(conn, target)
+
+
 class TemperatureTableGrid(wx.grid.Grid):
     """
     有効積算温度を集計するグリッドです。
@@ -565,6 +601,10 @@ if __name__ == '__main__':
         
         # 気温初期データ取得
         init_temperature(conn, proxies)
+
+        # 初期値のデータを投入
+        create_default_target(conn)
+
     else:
         # データベースと接続
         conn = get_connection(db_name)
