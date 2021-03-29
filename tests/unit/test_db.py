@@ -441,7 +441,61 @@ def test_get_targets(get_db):
         assert target_data.base == _temp_data.base
         assert target_data.accum == _temp_data.accum
         assert target_data.comment == _temp_data.comment
-    
+
+def test_insert_target_data(get_db):
+    """
+    ターゲットデータを作成する機能テスト
+    """
+    conn = get_db
+    target_type = db.get_target_type(conn, id=1)
+    target_data = db.TargetDataModel(
+        id=-1,
+        target=None,
+        refer=None,
+        state='TEST',
+        base=0.0,
+        accum=100.0,
+        comment='TEST'
+    )
+    target = db.TargetModel(
+        id=-1,
+        name='TEST TARGET',
+        type=target_type,
+        datas=[target_data],
+        comment='TEST'
+    )
+    target_data.target = target
+
+    db.insert_target(conn, target)
+
+    new_target_data = db.TargetDataModel(
+        id=-1,
+        target=target,
+        refer=None,
+        state='NEW TEST',
+        base=6.0,
+        accum=123.4,
+        comment='NEW COMMENT'
+    )
+
+    db.insert_target_data(conn, new_target_data)
+
+    cursor = conn.cursor()
+    cursor.execute(
+        'SELECT * FROM TargetData WHERE Id = ?;',
+        (new_target_data.id, )
+    )
+    result = cursor.fetchone()
+
+    assert result is not None
+    assert result['Id'] == new_target_data.id
+    assert result['Target'] == new_target_data.target.id
+    assert result['Reference'] is None
+    assert result['State'] == new_target_data.state
+    assert result['Base'] == new_target_data.base
+    assert result['Accumulation'] == new_target_data.accum
+    assert result['Comment'] == new_target_data.comment
+
 
 
 

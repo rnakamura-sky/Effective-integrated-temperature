@@ -100,7 +100,7 @@ class TemperatureTableGrid(wx.grid.Grid):
             temp_sum = row[1][3]
             temp_sum_before_10days = row[1][-10]
             alert_temp = 10.0
-            print(base, accum, temp_sum, temp_sum_before_10days)
+            # print(base, accum, temp_sum, temp_sum_before_10days)
 
             colour = (255, 255, 255, 255)
             if i == 0:
@@ -197,7 +197,7 @@ def calc_table_data(targets, temperatures) -> pd.DataFrame:
                 target_temp_list[i] = round(sum_value, 1)
 
             row_target = [target.name, target_data.base, target_data.accum, round(target_temp_list[-1], 1)] + target_temp_list
-            df.loc[target.id] = row_target
+            df.loc[target_data.id] = row_target
     return df
 
 class Controller():
@@ -383,7 +383,7 @@ class TargetAddDialog(wx.Dialog):
         self.SetSizer(sizer)
 
     def get_data(self):
-        print(self.combo_type.GetSelection())
+        # print(self.combo_type.GetSelection())
         if self.combo_type.GetSelection() > -1:
             _type = self.combo_type.GetClientData(self.combo_type.GetSelection())
         else:
@@ -595,7 +595,7 @@ class MainFrame(wx.Frame):
                 break
             wx.MessageBox('入力エラーがあります', '入力エラー')
             result = dialog.ShowModal()
-        print(result)
+        # print(result)
         if result == wx.ID_DELETE:
             delete_data = dialog.get_data()
             delete_target_id = delete_data['id']

@@ -208,6 +208,34 @@ def insert_target(conn, target):
 
     return target
 
+def insert_target_data(conn, target_data):
+    """
+    ターゲットデータ追加
+    """
+    _id = -1
+    _target_id = target_data.target.id
+    _state = target_data.state
+    _refer = None if target_data.refer is None else target_data.refer.id
+    _base = target_data.base
+    _accum = target_data.accum
+    _comment = target_data.comment
+
+    cursor = conn.cursor()
+
+    cursor.execute(
+        'INSERT INTO TargetData(Target, State, Reference, Base, Accumulation, Comment) '
+        'VALUES (?, ?, ?, ?, ?, ?);',
+        (_target_id, _state, _refer, _base, _accum, _comment)
+    )
+    _id = cursor.lastrowid
+    target_data.id = _id
+
+    conn.commit()
+    cursor.close()
+
+    return target_data
+
+
 def delete_target(conn, target_id):
     """
     指定されたターゲットを削除します。
