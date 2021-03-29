@@ -235,6 +235,31 @@ def insert_target_data(conn, target_data):
 
     return target_data
 
+def update_target_data(conn, target_data):
+    """
+    ターゲットデータ更新機能
+    """
+    _id = target_data.id
+    _state = target_data.state
+    _refer = None if target_data.refer is None else target_data.refer.id
+    _base = target_data.base
+    _accum = target_data.accum
+    _comment = target_data.comment
+
+    cursor = conn.cursor()
+
+    cursor.execute(
+        'UPDATE TargetData '
+        'SET State = ?, Reference = ?, Base = ?, Accumulation = ?, Comment = ? '
+        'WHERE Id = ?;',
+        (_state, _refer, _base, _accum, _comment, _id)
+    )
+
+    conn.commit()
+    cursor.close()
+
+    return target_data
+
 
 def delete_target(conn, target_id):
     """

@@ -498,6 +498,63 @@ def test_insert_target_data(get_db):
 
 
 
+def test_update_target_data(get_db):
+    """
+    ターゲットデータを更新する機能テスト
+    """
+    conn = get_db
+    target_type = db.get_target_type(conn, id=1)
+    target_data = db.TargetDataModel(
+        id=-1,
+        target=None,
+        refer=None,
+        state='TEST',
+        base=0.0,
+        accum=100.0,
+        comment='TEST'
+    )
+    target = db.TargetModel(
+        id=-1,
+        name='TEST TARGET',
+        type=target_type,
+        datas=[target_data],
+        comment='TEST'
+    )
+    target_data.target = target
+
+    db.insert_target(conn, target)
+
+    update_target_data = db.TargetDataModel(
+        id=target_data.id,
+        target=target_data.target,
+        refer=None,
+        state='NEW TEST',
+        base=6.0,
+        accum=123.4,
+        comment='NEW COMMENT'
+    )
+
+    db.update_target_data(conn, update_target_data)
+
+    cursor = conn.cursor()
+    cursor.execute(
+        'SELECT * FROM TargetData WHERE Id = ?;',
+        (update_target_data.id, )
+    )
+    result = cursor.fetchone()
+
+    assert result is not None
+    assert target_data.id == update_target_data.id
+    assert result['Id'] == update_target_data.id
+    assert result['Target'] == update_target_data.target.id
+    assert result['Reference'] is None
+    assert result['State'] == update_target_data.state
+    assert result['Base'] == update_target_data.base
+    assert result['Accumulation'] == update_target_data.accum
+    assert result['Comment'] == update_target_data.comment
+
+
+
 
 def test_get_temperature_info(get_db):
     """
