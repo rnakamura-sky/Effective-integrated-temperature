@@ -37,6 +37,7 @@ def test_db_init(get_db_no_schema, get_schema_filename):
     # Tableが作成できていることをSELECT文で確認
     cursor = conn.cursor()
     cursor.execute('SELECT * FROM Target;')
+    cursor.execute('SELECT * FROM TargetData')
     cursor.execute('SELECT * FROM TargetType;')
     cursor.execute('SELECT * FROM Temperature;')
 
@@ -141,9 +142,12 @@ def test_insert_target(get_db):
     target_id = -1
     target_name = '桜'
     target_type = None
-    target_base = 10.0
-    target_accum = 400.0
     target_comment = '桜'
+
+    target_data_state = 'TEST'
+    target_data_base = 10.0
+    target_data_accum = 400.0
+    target_data_comment = 'TEST DATA'
 
     conn = get_db
     cursor = conn.cursor()
@@ -157,26 +161,39 @@ def test_insert_target(get_db):
             break
     assert target_type is not None
 
+    target_data = db.TargetDataModel(
+        state=target_data_state,
+        refer=None,
+        base=target_data_base,
+        accum=target_data_accum,
+        comment=target_data_comment,
+    )
+
     target = db.TargetModel(
         name=target_name,
         type=target_type,
-        base=target_base,
-        accum=target_accum,
+        datas=[target_data],
         comment=target_comment)
 
     db.insert_target(conn, target)
 
-    cursor.execute('SELECT * FROM Target Where Id = ?;', (target.id,))
+    cursor.execute('SELECT * FROM Target WHERE Id = ?;', (target.id,))
+    result_target = dict(cursor.fetchone())
+    cursor.execute('SELECT * FROM TargetData WHERE Id = ?;', (target.datas[0].id, ))
+    result_target_data = dict(cursor.fetchone())
 
-    result = dict(cursor.fetchone())
-
-    assert result['Id'] == target.id
-    assert result['Name'] == target.name
-    assert result['Type'] == target.type.id
-    assert result['Base'] == target.base
-    assert result['Accumulation'] == target.accum
-    assert result['Comment'] == target.comment
-
+    assert result_target['Id'] == target.id
+    assert result_target['Name'] == target.name
+    assert result_target['Type'] == target.type.id
+    assert result_target['Comment'] == target.comment
+    
+    assert result_target_data['Id'] == target_data.id
+    assert result_target_data['Target'] == target_data.target.id
+    assert result_target_data['Reference'] is None
+    assert result_target_data['State'] == target_data.state
+    assert result_target_data['Base'] == target_data.base
+    assert result_target_data['Accumulation'] == target_data.accum
+    assert result_target_data['Comment'] == target_data.comment
     cursor.close()
 
 
@@ -184,11 +201,16 @@ def test_get_target(get_db):
     """
     ターゲット登録機能のテスト
     """
+    _target_id = -1
     _name = '桜'
     _type_id = -1
+    _target_comment = '桜'
+
+    _target_data_id = -1
+    _state = 'TTT'
     _base = 10.0
     _accum = 400.0
-    _comment = '桜'
+    _target_data_comment = 'TEST'
 
     conn = get_db
     cursor = conn.cursor()
@@ -203,27 +225,39 @@ def test_get_target(get_db):
             target_type = _target_type
             break
     assert target_type is not None
+    _type_id = target_type.id
 
-    target = db.TargetModel(
-        name=_name,
-        type=target_type,
-        base=_base,
-        accum=_accum,
-        comment=_comment)
+    cursor.execute(
+        'INSERT INTO Target(Name, Type, Comment) VALUES (?, ?, ?);',
+        (_name, _type_id, _target_comment)
+    )
+    _target_id = cursor.lastrowid
+    cursor.execute(
+        'INSERT INTO TargetData(Target, State, Base, Accumulation, Comment) VALUES (?, ?, ?, ?, ?);',
+        (_target_id, _state, _base, _accum, _target_data_comment)
+    )
+    _target_data_id = cursor.lastrowid
 
-    db.insert_target(conn, target)
+    conn.commit()
 
-    _id = target.id
-
-    result = db.get_target(conn, _id)
+    result = db.get_target(conn, _target_id)
 
     assert isinstance(result, db.TargetModel)
-    assert result.id == target.id
-    assert result.name == target.name
-    assert result.type.id == target.type.id
-    assert result.base == target.base
-    assert result.accum == target.accum
-    assert result.comment == target.comment
+    assert result.id == _target_id
+    assert result.name == _name
+    assert result.type.id == _type_id
+    assert result.comment == _target_comment
+    assert len(result.datas) == 1
+
+    result_target_data = result.datas[0]
+    assert isinstance(result_target_data, db.TargetDataModel)
+    assert result_target_data.id == _target_data_id
+    assert result_target_data.target.id == _target_id
+    assert result_target_data.state == _state
+    assert result_target_data.refer is None
+    assert result_target_data.base == _base
+    assert result_target_data.accum == _accum
+    assert result_target_data.comment == _target_data_comment
 
     cursor.close()
 
@@ -234,15 +268,22 @@ def test_update_target(get_db):
     target_id = -1
     target_name = '桜'
     target_type = None
+    target_comment = '桜'
+
+    target_data_id = -1
+    target_state = 'TTT'
     target_base = 10.0
     target_accum = 400.0
-    target_comment = '桜'
+    target_data_comment = 'DATA'
+
 
     update_target_name = 'さくら'
     update_target_type = None
+    update_target_comment = 'さくら'
+    update_target_state = 'EEE'
     update_target_base = 20.0
     update_target_accum = 600.0
-    update_target_comment = 'さくら'
+    update_target_data_comment = 'ATAD'
 
     conn = get_db
     cursor = conn.cursor()
@@ -258,63 +299,102 @@ def test_update_target(get_db):
     assert target_type is not None
     assert update_target_type is not None
 
+    target_data = db.TargetDataModel(
+        id=-1,
+        target=None,
+        refer=None,
+        state=target_state,
+        base=target_base,
+        accum=target_accum,
+        comment=target_data_comment
+    )
+
     target = db.TargetModel(
         name=target_name,
         type=target_type,
-        base=target_base,
-        accum=target_accum,
+        datas=[target_data],
         comment=target_comment)
     db.insert_target(conn, target)
 
     ## ここからテスト
+    update_target_data = db.TargetDataModel(
+        id=target_data.id,
+        target=target,
+        refer=None,
+        state=update_target_state,
+        base=update_target_base,
+        accum=update_target_accum,
+        comment=update_target_data_comment
+    )
     update_target = db.TargetModel(
         id=target.id,
         name=update_target_name,
         type=update_target_type,
-        base=update_target_base,
-        accum=update_target_accum,
+        datas=[update_target_data],
         comment=update_target_comment,
     )
 
     db.update_target(conn, update_target)
 
-    cursor.execute('SELECT * FROM Target Where Id = ?;', (target.id,))
-
+    cursor.execute('SELECT * FROM Target WHERE Id = ?;', (target.id,))
     result = dict(cursor.fetchone())
+    cursor.execute('SELECT * FROM TargetData WHERE Id = ?;', (target_data.id, ))
+    result_data = dict(cursor.fetchone())
 
     assert result['Id'] == target.id
     assert result['Name'] == update_target.name
     assert result['Type'] == update_target.type.id
-    assert result['Base'] == update_target.base
-    assert result['Accumulation'] == update_target.accum
     assert result['Comment'] == update_target.comment
+    assert len(update_target.datas) == 1
+
+    assert result_data['Id'] == target_data.id
+    assert result_data['Target'] == target.id
+    assert result_data['Reference'] == None
+    assert result_data['State'] == update_target_state
+    assert result_data['Base'] == update_target_data.base
+    assert result_data['Accumulation'] == update_target_data.accum
+    assert result_data['Comment'] == update_target_data_comment
 
     cursor.close()
 
-def test_delete_targets(get_db):
+def test_delete_target(get_db):
     """
     ターゲット削除機能テスト
     """
     conn = get_db
     target_type = db.get_target_type(conn, id=1)
-    target = db.TargetModel(
+    target_data = db.TargetDataModel(
         id=-1,
-        name='TEST TARGET',
-        type=target_type,
+        target=None,
+        refer=None,
+        state='TEST',
         base=0.0,
         accum=100.0,
         comment='TEST'
     )
+    target = db.TargetModel(
+        id=-1,
+        name='TEST TARGET',
+        type=target_type,
+        datas=[target_data],
+        comment='TEST'
+    )
+    target_data.target = target
+
     db.insert_target(conn, target)
     assert target.id > 0
+    assert target_data.id > 0
 
     db.delete_target(conn, target.id)
 
     cursor = conn.cursor()
-    cursor.execute('SELECT * FROM Target WHERE Id = ?', (target.id,))
+    cursor.execute('SELECT * FROM Target WHERE Id = ?;', (target.id,))
     result = cursor.fetchone()
-    
     assert result is None
+    cursor.execute('SELECT * FROM TargetData WHERE Target = ?;', (target.id,))
+    result = cursor.fetchone()
+    assert result is None
+
     cursor.close()
 
 
@@ -326,10 +406,14 @@ def test_get_targets(get_db):
     target_types = db.get_target_types(conn)
     count = 0
     target_datas = [
-        db.TargetModel(name='TEST1', type=target_types[0], base=10.0, accum=300.0, comment='TEST1'),
-        db.TargetModel(name='TEST2', type=target_types[0], base=10.0, accum=300.0, comment='TEST2'),
-        db.TargetModel(name='TEST3', type=target_types[1], base=10.0, accum=300.0, comment='TEST3'),
-        db.TargetModel(name='TEST4', type=target_types[1], base=10.0, accum=300.0, comment='TEST4'),
+        db.TargetModel(name='TEST1', type=target_types[0], comment='TEST1',
+                        datas=[db.TargetDataModel(state='STATE1', base=10.0, accum=300.0, comment='TEST DATA1')]),
+        db.TargetModel(name='TEST2', type=target_types[0], comment='TEST2',
+                        datas=[db.TargetDataModel(state='STATE2', base=10.0, accum=300.0, comment='TEST DATA2')]),
+        db.TargetModel(name='TEST3', type=target_types[1], comment='TEST3',
+                        datas=[db.TargetDataModel(state='STATE3', base=10.0, accum=300.0, comment='TEST DATA3')]),
+        db.TargetModel(name='TEST4', type=target_types[1], comment='TEST4',
+                        datas=[db.TargetDataModel(state='STATE4', base=10.0, accum=300.0, comment='TEST DATA4')]),
     ]
     for t in target_datas:
         db.insert_target(conn, t)
@@ -345,9 +429,18 @@ def test_get_targets(get_db):
         assert _temp is not None
         assert target.name == _temp.name
         assert target.type.id == _temp.type.id
-        assert target.base == _temp.base
-        assert target.accum == _temp.accum
         assert target.comment == _temp.comment
+
+        assert len(target.datas) == len(_temp.datas)
+        target_data = target.datas[0]
+        _temp_data = _temp.datas[0]
+        assert target_data.id == _temp_data.id
+        assert target_data.target.id == _temp_data.target.id
+        assert target_data.refer is None
+        assert target_data.state == _temp_data.state
+        assert target_data.base == _temp_data.base
+        assert target_data.accum == _temp_data.accum
+        assert target_data.comment == _temp_data.comment
     
 
 

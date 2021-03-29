@@ -24,26 +24,46 @@ def create_default_target(conn):
     target_types = db.get_target_types(conn)
     target_type_dict = {tt.name: tt for tt in target_types}
     target_list = [
-        db.TargetModel(name='ブドウトラカミキリ　卵～',                    type=target_type_dict['虫'], base=9.7, accum=114.1, comment='ブドウトラカミキリ　卵～'),
-        db.TargetModel(name='ブドウトラカミキリ　卵～成虫羽化',             type=target_type_dict['虫'], base=8.0, accum=408.4, comment='ブドウトラカミキリ　卵～成虫羽化'),
-        db.TargetModel(name='クワコナカイガラムシ　卵～',                  type=target_type_dict['虫'], base=12.3, accum=127.0, comment='クワコナカイガラムシ　卵～'),
-        db.TargetModel(name='クワコナカイガラムシ　雌幼虫～成虫羽化',       type=target_type_dict['虫'], base=10.8, accum=346.0, comment='クワコナカイガラムシ　雌幼虫～成虫羽化'),
-        db.TargetModel(name='クワコナカイガラムシ　幼虫～産卵前期',         type=target_type_dict['虫'], base=9.7, accum=549.0, comment='クワコナカイガラムシ　幼虫～産卵前期'),
-        db.TargetModel(name='ミカンキイロアザミウマ　卵～',                 type=target_type_dict['虫'], base=9.2, accum=50.0, comment='ミカンキイロアザミウマ　卵～'),
-        db.TargetModel(name='ミカンキイロアザミウマ　幼虫～蛹',             type=target_type_dict['虫'], base=9.0, accum=90.3, comment='ミカンキイロアザミウマ　幼虫～蛹'),
-        db.TargetModel(name='ミカンキイロアザミウマ　蛹～羽化',              type=target_type_dict['虫'], base=9.8, accum=66.7, comment='ミカンキイロアザミウマ　蛹～羽化'),
-        db.TargetModel(name='ミカンキイロアザミウマ　幼虫～成虫羽化',        type=target_type_dict['虫'], base=9.5, accum=194.0, comment='ミカンキイロアザミウマ　幼虫～成虫羽化'),
-        db.TargetModel(name='チャノキイロアザミウマ（大阪）　卵～',          type=target_type_dict['虫'], base=9.5, accum=119.0, comment='チャノキイロアザミウマ（大阪）　卵～'),
-        db.TargetModel(name='チャノキイロアザミウマ（大阪）　幼虫～成虫羽化', type=target_type_dict['虫'], base=7.7, accum=181.8, comment='チャノキイロアザミウマ（大阪）　幼虫～成虫羽化'),
-        db.TargetModel(name='チャノキイロアザミウマ（静岡）　卵～成虫羽化',   type=target_type_dict['虫'], base=9.7, accum=265.0, comment='チャノキイロアザミウマ（静岡）　卵～成虫羽化'),
-        db.TargetModel(name='フタテンヒメヨコバイ　卵～',                   type=target_type_dict['虫'], base=10.8, accum=125.0, comment='フタテンヒメヨコバイ　卵～'),
-        db.TargetModel(name='フタテンヒメヨコバイ　幼虫～成虫羽化',          type=target_type_dict['虫'], base=13.0, accum=200.0, comment='フタテンヒメヨコバイ　幼虫～成虫羽化'),
-        db.TargetModel(name='フタテンヒメヨコバイ　卵～成虫羽化',            type=target_type_dict['虫'], base=11.0, accum=333.0, comment='フタテンヒメヨコバイ　卵～成虫羽化'),
-        db.TargetModel(name='コウモリガ　卵～',                            type=target_type_dict['虫'], base=6.7, accum=200.0, comment='コウモリガ　卵～'),
-        db.TargetModel(name='コウモリガ　卵～4齢幼虫',                      type=target_type_dict['虫'], base=7.2, accum=390.0, comment='コウモリガ　卵～4齢幼虫'),
-        db.TargetModel(name='ハスモンヨトウ　卵～',                         type=target_type_dict['虫'], base=10.1, accum=63.7, comment='ハスモンヨトウ　卵～'),
-        db.TargetModel(name='ハスモンヨトウ　卵～成虫羽化',                  type=target_type_dict['虫'], base=10.3, accum=526.3, comment='ハスモンヨトウ　卵～成虫羽化'),
-        db.TargetModel(name='ハスモンヨトウ　卵～卵',                       type=target_type_dict['虫'], base=10.3, accum=628.7, comment='ハスモンヨトウ　卵～'),
+        db.TargetModel(type=target_type_dict['虫'], name='ブドウトラカミキリ　卵～', comment='ブドウトラカミキリ　卵～',
+                    datas=[db.TargetDataModel(refer=None, state='卵～', base=9.7, accum=114.1, comment='')]),
+        db.TargetModel(type=target_type_dict['虫'], name='ブドウトラカミキリ　卵～成虫羽化', comment='ブドウトラカミキリ　卵～成虫羽化',
+                    datas=[db.TargetDataModel(refer=None, state='卵～成虫羽化', base=8.0, accum=408.4, comment='')]),
+        db.TargetModel(type=target_type_dict['虫'], name='クワコナカイガラムシ　卵～', comment='クワコナカイガラムシ　卵～',
+                    datas=[db.TargetDataModel(refer=None, state='卵～', base=12.3, accum=127.0, comment='')]),
+        db.TargetModel(type=target_type_dict['虫'], name='クワコナカイガラムシ　雌幼虫～成虫羽化', comment='クワコナカイガラムシ　雌幼虫～成虫羽化',
+                    datas=[db.TargetDataModel(refer=None, state='雌幼虫～成虫羽化', base=10.8, accum=346.0, comment='')]),
+        db.TargetModel(type=target_type_dict['虫'], name='クワコナカイガラムシ　幼虫～産卵前期', comment='クワコナカイガラムシ　幼虫～産卵前期',
+                    datas=[db.TargetDataModel(refer=None, state='幼虫～産卵前期', base=9.7, accum=549.0, comment='')]),
+        db.TargetModel(type=target_type_dict['虫'], name='ミカンキイロアザミウマ　卵～', comment='ミカンキイロアザミウマ　卵～',
+                    datas=[db.TargetDataModel(refer=None, state='卵～', base=9.2, accum=50.0, comment='')]),
+        db.TargetModel(type=target_type_dict['虫'], name='ミカンキイロアザミウマ　幼虫～蛹', comment='ミカンキイロアザミウマ　幼虫～蛹',
+                    datas=[db.TargetDataModel(refer=None, state='幼虫～蛹', base=9.0, accum=90.3, comment='')]),
+        db.TargetModel(type=target_type_dict['虫'], name='ミカンキイロアザミウマ　蛹～羽化', comment='ミカンキイロアザミウマ　蛹～羽化',
+                    datas=[db.TargetDataModel(refer=None, state='蛹～羽化', base=9.8, accum=66.7, comment='')]),
+        db.TargetModel(type=target_type_dict['虫'], name='ミカンキイロアザミウマ　幼虫～成虫羽化', comment='ミカンキイロアザミウマ　幼虫～成虫羽化',
+                    datas=[db.TargetDataModel(refer=None, state='幼虫～成虫羽化', base=9.5, accum=194.0, comment='')]),
+        db.TargetModel(type=target_type_dict['虫'], name='チャノキイロアザミウマ（大阪）　卵～', comment='チャノキイロアザミウマ（大阪）　卵～',
+                    datas=[db.TargetDataModel(refer=None, state='卵～', base=9.5, accum=119.0, comment='')]),
+        db.TargetModel(type=target_type_dict['虫'], name='チャノキイロアザミウマ（大阪）　幼虫～成虫羽化', comment='チャノキイロアザミウマ（大阪）　幼虫～成虫羽化',
+                    datas=[db.TargetDataModel(refer=None, state='幼虫～成虫羽化', base=7.7, accum=181.8, comment='')]),
+        db.TargetModel(type=target_type_dict['虫'], name='チャノキイロアザミウマ（静岡）　卵～成虫羽化', comment='チャノキイロアザミウマ（静岡）　卵～成虫羽化',
+                    datas=[db.TargetDataModel(refer=None, state='卵～成虫羽化', base=9.7, accum=265.0, comment='')]),
+        db.TargetModel(type=target_type_dict['虫'], name='フタテンヒメヨコバイ　卵～', comment='フタテンヒメヨコバイ　卵～',
+                    datas=[db.TargetDataModel(refer=None, state='卵～', base=10.8, accum=125.0, comment='')]),
+        db.TargetModel(type=target_type_dict['虫'], name='フタテンヒメヨコバイ　幼虫～成虫羽化', comment='フタテンヒメヨコバイ　幼虫～成虫羽化',
+                    datas=[db.TargetDataModel(refer=None, state='幼虫～成虫羽化', base=13.0, accum=200.0, comment='')]),
+        db.TargetModel(type=target_type_dict['虫'], name='フタテンヒメヨコバイ　卵～成虫羽化', comment='フタテンヒメヨコバイ　卵～成虫羽化',
+                    datas=[db.TargetDataModel(refer=None, state='卵～成虫羽化', base=11.0, accum=333.0, comment='')]),
+        db.TargetModel(type=target_type_dict['虫'], name='コウモリガ　卵～', comment='コウモリガ　卵～',
+                    datas=[db.TargetDataModel(refer=None, state='卵～', base=6.7, accum=200.0, comment='')]),
+        db.TargetModel(type=target_type_dict['虫'], name='コウモリガ　卵～4齢幼虫', comment='コウモリガ　卵～4齢幼虫',
+                    datas=[db.TargetDataModel(refer=None, state='卵～4齢幼虫', base=7.2, accum=390.0, comment='')]),
+        db.TargetModel(type=target_type_dict['虫'], name='ハスモンヨトウ　卵～', comment='ハスモンヨトウ　卵～',
+                    datas=[db.TargetDataModel(refer=None, state='卵～', base=10.1, accum=63.7, comment='')]),
+        db.TargetModel(type=target_type_dict['虫'], name='ハスモンヨトウ　卵～成虫羽化', comment='ハスモンヨトウ　卵～成虫羽化',
+                    datas=[db.TargetDataModel(refer=None, state='卵～成虫羽化', base=10.3, accum=526.3, comment='')]),
+        db.TargetModel(type=target_type_dict['虫'], name='ハスモンヨトウ　卵～卵', comment='ハスモンヨトウ　卵～',
+                    datas=[db.TargetDataModel(refer=None, state='卵～卵', base=10.3, accum=628.7, comment='')]),
     ]
 
     for target in target_list:
@@ -163,9 +183,10 @@ def calc_table_data(targets, temperatures) -> pd.DataFrame:
     df.loc[0] = row_temp
 
     for target in targets:
-        target_temp_list = [round(t - target.base, 1) if t > target.base else 0.0 for t in temp_list]
-        row_target = [target.name, target.base, target.accum, round(sum(target_temp_list), 1)] + target_temp_list
-        df.loc[target.id] = row_target
+        for target_data in target.datas:
+            target_temp_list = [round(t - target_data.base, 1) if t > target_data.base else 0.0 for t in temp_list]
+            row_target = [target.name, target_data.base, target_data.accum, round(sum(target_temp_list), 1)] + target_temp_list
+            df.loc[target.id] = row_target
     return df
 
 class Controller():
@@ -268,7 +289,19 @@ class Controller():
     
     def registor_target(self, data:dict):
         conn = self.conn
-        target = db.TargetModel(**data)
+        target_data = db.TargetDataModel(
+            refer=None,
+            state='',
+            base=data['base'],
+            accum=data['accum'],
+            comment=data['comment']
+        )
+        target = db.TargetModel(
+            name=data['name'],
+            type=data['type'],
+            datas=[target_data],
+            comment=''
+        )
         db.insert_target(conn, target)
         
         self.targets = None
@@ -276,6 +309,21 @@ class Controller():
     
     def update_target(self, data:dict):
         conn = self.conn
+        target_data = db.TargetDataModel(
+            id=data['data_id'],
+            refer=None,
+            state='',
+            base=data['base'],
+            accum=data['accum'],
+            comment=data['comment']
+        )
+        target = db.TargetModel(
+            id=data['id'],
+            name=data['name'],
+            type=data['type'],
+            datas=[target_data],
+            comment=''
+        )
         target = db.TargetModel(**data)
         db.update_target(conn, target)
 
@@ -344,6 +392,9 @@ class TargetUpdateDialog(wx.Dialog):
         target_types = controller.get_target_types()
 
         self.target_id = target.id
+        self.target_data_id = target.datas[0].id
+
+        target_data = target.datas[0]
 
         self.text_name = wx.TextCtrl(self, -1, target.name)
         self.combo_type = wx.ComboBox(self, wx.ID_ANY, '', style=wx.CB_READONLY)
@@ -351,8 +402,8 @@ class TargetUpdateDialog(wx.Dialog):
             self.combo_type.Append(target_type.name ,target_type)
         self.combo_type.SetStringSelection(target.type.name)
 
-        self.spind_base = wx.SpinCtrlDouble(self, wx.ID_ANY, inc=0.1, min=-30.0, max=40.0, value=str(target.base))
-        self.spind_accum = wx.SpinCtrlDouble(self, wx.ID_ANY, inc=0.1, min=0.0, max=10000.0, value=str(target.accum))
+        self.spind_base = wx.SpinCtrlDouble(self, wx.ID_ANY, inc=0.1, min=-30.0, max=40.0, value=str(target_data.base))
+        self.spind_accum = wx.SpinCtrlDouble(self, wx.ID_ANY, inc=0.1, min=0.0, max=10000.0, value=str(target_data.accum))
         self.text_comment = wx.TextCtrl(self, -1, target.comment)
 
         button_ok = wx.Button(self, wx.ID_OK)
@@ -398,6 +449,7 @@ class TargetUpdateDialog(wx.Dialog):
             'base': self.spind_base.GetValue(),
             'accum': self.spind_accum.GetValue(),
             'comment': self.text_comment.GetValue(),
+            'data_id': self.target_data_id,
         }
         return result_data
 

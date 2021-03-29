@@ -12,6 +12,18 @@ CREATE TABLE Target (
     Id INTEGER PRIMARY KEY autoincrement,
     Name string NOT NULL UNIQUE,
     Type INTEGER,
+    -- Base FLOAT,
+    -- Accumulation FLOAT,
+    Comment string
+);
+
+DROP TABLE IF EXISTS TargetData;
+
+CREATE TABLE TargetData (
+    Id INTEGER PRIMARY KEY autoincrement,
+    Target INTEGER,
+    State string,
+    Reference INTEGER NULL,
     Base FLOAT,
     Accumulation FLOAT,
     Comment string

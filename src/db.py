@@ -36,16 +36,31 @@ class TargetModel():
     """
     ターゲットを管理するためのモデル
     """
-    def __init__(self, id:int=-1, name:str='', type:TargetTypeModel=None, base:float=0.0, accum:float=0.0, comment:str=''):
+    def __init__(self, id:int=-1, name:str='', type:TargetTypeModel=None, datas:list=None, comment:str=''):
         self.id = id
         self.name = name
         self.type = type
-        self.base = base
-        self.accum = accum
+        self.datas = datas
         self.comment = comment
     
     def __str__(self):
-        return f'Id:{self.id} Name:{self.name} Type:{self.type.name} Base:{self.base} Accum:{self.accum} Comment:{self.comment}'
+        return f'Id:{self.id} Name:{self.name} Comment:{self.comment}'
+
+class TargetDataModel():
+    """
+    ターゲット内でのデータを管理するためのモデル
+    """
+    def __init__(self, id:int=-1, target:TargetModel=None, refer=None, state:str='', base:float=0.0, accum:float=0.0, comment:str=''):
+        self.id = id
+        self.target = target
+        self.refer = refer
+        self.state = state
+        self.base = base
+        self.accum = accum
+        self.comment = comment
+
+    def __str__(self):
+        return f'Id:{self.id} State:{self.state} Base:{self.base} Accum:{self.accum} Comment:{self.comment}'
 
 
 def get_connection(db_name):
@@ -158,23 +173,39 @@ def insert_target(conn, target):
     _id = -1
     _name = target.name
     _type = target.type.id
-    _base = target.base
-    _accum = target.accum
+    # _base = target.base
+    # _accum = target.accum
     _comment = target.comment
+
+    target_datas = target.datas
 
     cursor = conn.cursor()
 
     cursor.execute(
-        'INSERT INTO Target(Name, Type, Base, Accumulation, Comment) '
-        'VALUES (?, ?, ?, ?, ?);',
-        (_name, _type, _base, _accum, _comment)
+        'INSERT INTO Target(Name, Type, Comment) '
+        'VALUES (?, ?, ?);',
+        (_name, _type, _comment)
     )
     _id = cursor.lastrowid
-
+    target.id = _id
+    for data in target_datas:
+        _id_data = -1
+        _state = data.state
+        _refer = data.refer.id if data.refer is not None else None
+        _base = data.base
+        _accum = data.accum
+        _comment = data.comment
+        cursor.execute(
+            'INSERT INTO TargetData(Target, State, Reference, Base, Accumulation, Comment) '
+            'VALUES (?, ?, ?, ?, ?, ?);',
+            (_id, _state, _refer, _base, _accum, _comment)
+        )
+        _id_data = cursor.lastrowid
+        data.id = _id_data
+        data.target = target
     conn.commit()
     cursor.close()
 
-    target.id = _id
     return target
 
 def delete_target(conn, target_id):
@@ -184,6 +215,9 @@ def delete_target(conn, target_id):
     cursor = conn.cursor()
     cursor.execute(
         'DELETE FROM Target WHERE Id = ?', (target_id,)
+    )
+    cursor.execute(
+        'DELETE FROM TargetData WHERE Target = ?', (target_id,)
     )
     conn.commit()
     cursor.close()
@@ -197,18 +231,29 @@ def update_target(conn, target):
     _id = target.id
     _name = target.name
     _type = target.type.id
-    _base = target.base
-    _accum = target.accum
     _comment = target.comment
 
     cursor = conn.cursor()
 
     cursor.execute(
         'UPDATE Target '
-        'SET Name = ?, Type = ?, Base = ?, Accumulation = ?, Comment = ? '
+        'SET Name = ?, Type = ?, Comment = ? '
         'WHERE Id = ?;',
-        (_name, _type, _base, _accum, _comment, _id)
+        (_name, _type, _comment, _id)
     )
+    for data in target.datas:
+        _data_id = data.id
+        _state = data.state
+        _refer = None if data.refer is None else data.refer.id
+        _base = data.base
+        _accum = data.accum
+        _comment = data.comment
+        cursor.execute(
+            'UPDATE TargetData '
+            'SET State = ?, Reference = ?, Base = ?, Accumulation = ?, Comment = ? '
+            'WHERE Id = ?;',
+            (_state, _refer, _base, _accum, _comment, _data_id)
+        )
     conn.commit()
     cursor.close()
 
@@ -227,6 +272,13 @@ def get_target(conn, id):
         (id,)
     )
     result = cursor.fetchone()
+    cursor.execute(
+        'SELECT * '
+        'FROM TargetData '
+        'WHERE Target = ?;',
+        (id, )
+    )
+    result_datas = cursor.fetchall()
 
     target_type = get_target_type(conn, result['Type'])
 
@@ -234,10 +286,27 @@ def get_target(conn, id):
         id=result['Id'],
         name=result['Name'],
         type=target_type,
-        base=result['Base'],
-        accum=result['Accumulation'],
         comment=result['Comment']
     )
+    target_data_dict = dict()
+    for result_data in result_datas:
+        target_data = TargetDataModel(
+            id=result_data['Id'],
+            target=target,
+            state=result_data['State'],
+            refer=result_data['Reference'],
+            base=result_data['Base'],
+            accum=result_data['Accumulation'],
+            comment=result_data['Comment']
+        )
+        target_data_dict[target_data.id] = target_data
+    target_datas = []
+    for tmp in target_data_dict.values():
+        print(tmp.refer)
+        if tmp.refer is not None:
+            tmp.refer = target_data_dict[tmp.refer]
+        target_datas.append(tmp)
+    target.datas = target_datas
 
     cursor.close()
     return target
@@ -280,7 +349,7 @@ def get_targets(conn):
     cursor = conn.cursor()
 
     cursor.execute('SELECT * FROM Target;')
-    results = []
+    result_dict = dict()
     for row in cursor.fetchall():
         data = dict(row)
         target_type = target_type_dict[data['Type']]
@@ -288,12 +357,35 @@ def get_targets(conn):
             id=data['Id'],
             name=data['Name'],
             type=target_type,
-            base=data['Base'],
-            accum=data['Accumulation'],
+            datas=[],
             comment=data['Comment'],
         )
-        results.append(target)
+        result_dict[target.id] = target
+
+    target_datas = []
+    cursor.execute('SELECT * FROM TargetData;')
+    result_data_dict = dict()
+    for row in cursor.fetchall():
+        data = dict(row)
+        target_data = TargetDataModel(
+            id=data['Id'],
+            target=data['Target'],
+            state=data['State'],
+            refer=data['Reference'],
+            base=data['Base'],
+            accum=data['Accumulation'],
+            comment=data['Comment']
+        )
+        result_data_dict[target_data.id] = target_data    
+
+    for data in result_data_dict.values():
+        if data.refer is not None:
+            data.refer = result_data_dict[data.refer]
+        target = result_dict[data.target]
+        data.target = target
+        target.datas.append(data)
     
+    results = list(result_dict.values())
     cursor.close()
 
     return results
