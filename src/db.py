@@ -260,6 +260,26 @@ def update_target_data(conn, target_data):
 
     return target_data
 
+def delete_target_data(conn, target_data):
+    """
+    ターゲットデータ削除機能
+    """
+    _id = target_data.id
+
+    cursor = conn.cursor()
+
+    cursor.execute(
+        'DELETE FROM TargetData '
+        'WHERE Id = ?;',
+        (_id,)
+    )
+
+    conn.commit()
+    cursor.close()
+
+    target_data.id = -1
+    return target_data
+
 
 def delete_target(conn, target_id):
     """
