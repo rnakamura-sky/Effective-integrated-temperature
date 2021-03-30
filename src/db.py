@@ -173,8 +173,6 @@ def insert_target(conn, target):
     _id = -1
     _name = target.name
     _type = target.type.id
-    # _base = target.base
-    # _accum = target.accum
     _comment = target.comment
 
     target_datas = target.datas
@@ -207,6 +205,34 @@ def insert_target(conn, target):
     cursor.close()
 
     return target
+
+def get_target_data(conn, id):
+    """
+    ターゲットデータを取得する
+    """
+    cursor = conn.cursor()
+
+    cursor.execute(
+        'SELECT * '
+        'FROM TargetData '
+        'WHERE Id = ?;',
+        (id, )
+    )
+    result = cursor.fetchone()
+    target_id = result['Target']
+    cursor.close()
+
+    target = get_target(conn, target_id)
+
+    result_target_data = None
+
+    for _target_data in target.datas:
+        if _target_data.id == id:
+            result_target_data = _target_data
+            break
+    
+    return result_target_data
+
 
 def insert_target_data(conn, target_data):
     """

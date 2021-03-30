@@ -84,7 +84,7 @@ class TemperatureTableGrid(wx.grid.Grid):
         self._output_table(data)
 
         self.SetRowLabelAlignment(wx.ALIGN_LEFT, wx.ALIGN_CENTER)
-        self.SetRowLabelSize(0)
+        # self.SetRowLabelSize(0)
         self.AutoSize()
 
         self.freeze_info = None
@@ -221,6 +221,10 @@ class Controller():
     def get_target(self, target_id):
         return db.get_target(self.conn, target_id)
     
+    def get_target_data(self, target_data_id):
+        return db.get_target_data(self.conn, target_data_id)
+    
+    
     def get_target_types(self):
         if self.target_types is None:
             self.target_tyes = db.get_target_types(self.conn)
@@ -302,7 +306,7 @@ class Controller():
         conn = self.conn
         target_data = db.TargetDataModel(
             refer=None,
-            state='',
+            state=data['state'],
             base=data['base'],
             accum=data['accum'],
             comment=data['comment']
@@ -311,14 +315,44 @@ class Controller():
             name=data['name'],
             type=data['type'],
             datas=[target_data],
-            comment=''
+            comment='',
         )
+        target_data.target = target
         db.insert_target(conn, target)
         
         self.targets = None
         self.table_data = None
     
     def update_target(self, data:dict):
+        conn = self.conn
+        target = db.TargetModel(
+            id=data['id'],
+            name=data['name'],
+            type=data['type'],
+            datas=[],
+            comment=''
+        )
+        db.update_target(conn, target)
+
+        self.targets = None
+        self.table_data = None
+
+    def registor_target_data(self, data:dict):
+        conn = self.conn
+        target_data = db.TargetDataModel(
+            target=data['target'],
+            refer=data['refer'],
+            state=data['state'],
+            base=data['base'],
+            accum=data['accum'],
+            comment=data['comment']
+        )
+        db.insert_target_data(conn, target_data)
+        
+        self.targets = None
+        self.table_data = None
+
+    def update_target_data(self, data:dict):
         conn = self.conn
         target_data = db.TargetDataModel(
             id=data['data_id'],
@@ -340,7 +374,7 @@ class Controller():
 
         self.targets = None
         self.table_data = None
-    
+
     def delete_target(self, target_id):
         conn = self.conn
         db.delete_target(conn, target_id)
@@ -353,12 +387,13 @@ class TargetAddDialog(wx.Dialog):
     def __init__(self, controller):
         wx.Dialog.__init__(self, None, -1, '生物追加', size=(400, 300))
 
-        targets = controller.get_target_types()
+        target_types = controller.get_target_types()
 
         self.text_name = wx.TextCtrl(self)
         self.combo_type = wx.ComboBox(self, wx.ID_ANY, '', style=wx.CB_READONLY)
-        for target in targets:
-            self.combo_type.Append(target.name ,target)
+        for target_type in target_types:
+            self.combo_type.Append(target_type.name ,target_type)
+        self.text_state = wx.TextCtrl(self, wx.ID_ANY, '標準')
         self.spind_base = wx.SpinCtrlDouble(self, wx.ID_ANY, '0.0', inc=0.1, min=-30.0, max=40.0)
         self.spind_accum = wx.SpinCtrlDouble(self, wx.ID_ANY, '0.0', inc=0.1, min=0.0, max=10000.0)
         self.text_comment = wx.TextCtrl(self)
@@ -375,6 +410,7 @@ class TargetAddDialog(wx.Dialog):
         sizer = wx.BoxSizer(wx.VERTICAL)
         sizer.Add(self.text_name, 0, wx.EXPAND)
         sizer.Add(self.combo_type, 0, wx.EXPAND)
+        sizer.Add(self.text_state, 0, wx.EXPAND)
         sizer.Add(self.spind_base, 0, wx.EXPAND)
         sizer.Add(self.spind_accum, 0, wx.EXPAND)
         sizer.Add(self.text_comment, 0, wx.EXPAND)
@@ -391,31 +427,231 @@ class TargetAddDialog(wx.Dialog):
         result_data = {
             'name': self.text_name.GetValue(),
             'type': _type,
+            'state': self.text_state.GetValue(),
             'base': self.spind_base.GetValue(),
             'accum': self.spind_accum.GetValue(),
             'comment': self.text_comment.GetValue(),
         }
         return result_data
 
+
 class TargetUpdateDialog(wx.Dialog):
-    def __init__(self, controller, target):
+    def __init__(self, controller):
         wx.Dialog.__init__(self, None, -1, '更新', size=(400, 300))
+
+        targets = controller.get_targets()
         target_types = controller.get_target_types()
 
-        self.target_id = target.id
-        self.target_data_id = target.datas[0].id
+        self.combo_target = wx.ComboBox(self, wx.ID_ANY, '', style=wx.CB_READONLY)
+        for target in targets:
+            self.combo_target.Append(target.name, target)
+        self.combo_target.Bind(wx.EVT_COMBOBOX, self.change_combo_target)
+        
+        self.text_name = wx.TextCtrl(self, -1, '')
+        self.text_name.Disable()
 
-        target_data = target.datas[0]
-
-        self.text_name = wx.TextCtrl(self, -1, target.name)
         self.combo_type = wx.ComboBox(self, wx.ID_ANY, '', style=wx.CB_READONLY)
         for target_type in target_types:
             self.combo_type.Append(target_type.name ,target_type)
-        self.combo_type.SetStringSelection(target.type.name)
+        self.combo_type.Disable()
+
+        self.text_comment = wx.TextCtrl(self, -1, '')
+        self.text_comment.Disable()
+
+        button_ok = wx.Button(self, wx.ID_OK)
+        button_ok.SetDefault()
+        button_cancel = wx.Button(self, wx.ID_CANCEL)
+        button_delete = wx.Button(self, wx.ID_DELETE)
+        button_delete.Bind(wx.EVT_BUTTON, self.close_dialog)
+
+        # button_sizer = wx.StdDialogButtonSizer()
+        # button_sizer.AddButton(button_ok)
+        # button_sizer.AddButton(button_cancel)
+        # button_sizer.AddButton(button_delete)
+        # button_sizer.Realize()
+        button_sizer = wx.BoxSizer(wx.HORIZONTAL)
+        button_sizer.Add(button_ok)
+        button_sizer.Add(button_cancel)
+        button_sizer.Add(button_delete)
+
+        sizer = wx.BoxSizer(wx.VERTICAL)
+        sizer.Add(self.combo_target, 0, wx.EXPAND)
+        sizer.Add(self.text_name, 0, wx.EXPAND)
+        sizer.Add(self.combo_type, 0, wx.EXPAND)
+        sizer.Add(self.text_comment, 0, wx.EXPAND)
+
+        sizer.Add(button_sizer, 0, wx.EXPAND)
+        self.SetSizer(sizer)
+
+    def change_combo_target(self, event):
+        obj = event.GetEventObject()
+        selection_id = obj.GetSelection()
+        if selection_id > -1:
+            target = self.combo_target.GetClientData(selection_id)
+            self.text_name.SetLabelText(target.name)
+            self.combo_type.SetStringSelection(target.type.name)
+            self.text_comment.SetLabelText(target.comment)
+
+            self.editable(True)
+        else:
+            self.editable(False)
+
+
+    def editable(self, flag=False):
+        if flag:
+            self.text_name.Enable()
+            self.combo_type.Enable()
+            self.text_comment.Enable()
+        else:
+            self.text_name.Disable()
+            self.combo_type.Disable()
+            self.text_comment.Disable()
+    
+    def close_dialog(self, event):
+        self.SetReturnCode(wx.ID_DELETE)
+        self.EndModal(wx.ID_DELETE)
+        # self.Close(True)
+
+    def get_data(self):
+        _target_id = -1
+        _target_selection = self.combo_target.GetSelection()
+        if _target_selection > -1:
+            _target_id = self.combo_target.GetClientData(_target_selection).id
+        
+        _type = None
+        _type_selection = self.combo_type.GetSelection()
+        if _type_selection > -1:
+            _type = self.combo_type.GetClientData(_type_selection)
+
+        result_data = {
+            'id': _target_id,
+            'name': self.text_name.GetValue(),
+            'type': _type,
+            'comment': self.text_comment.GetValue(),
+        }
+        return result_data
+
+class TargetDataAddDialog(wx.Dialog):
+    def __init__(self, controller):
+        wx.Dialog.__init__(self, None, -1, '基準を追加', size=(400, 300))
+
+        targets = controller.get_targets()
+        target_types = controller.get_target_types()
+
+        self.combo_target = wx.ComboBox(self, wx.ID_ANY, '', style=wx.CB_READONLY)
+        for target in targets:
+            self.combo_target.Append(str(target.name), target)
+        self.combo_target.Bind(wx.EVT_COMBOBOX, self.change_combo_target)
+        
+        self.text_state = wx.TextCtrl(self)
+        self.combo_refer = wx.ComboBox(self, wx.ID_ANY, '', style=wx.CB_READONLY)
+        self.combo_refer.Append('', None)
+
+        self.spind_base = wx.SpinCtrlDouble(self, wx.ID_ANY, '0.0', inc=0.1, min=-30.0, max=40.0)
+        self.spind_accum = wx.SpinCtrlDouble(self, wx.ID_ANY, '0.0', inc=0.1, min=0.0, max=10000.0)
+        self.text_comment = wx.TextCtrl(self)
+
+        button_ok = wx.Button(self, wx.ID_OK)
+        button_ok.SetDefault()
+        button_cancel = wx.Button(self, wx.ID_CANCEL)
+
+        button_sizer = wx.StdDialogButtonSizer()
+        button_sizer.AddButton(button_ok)
+        button_sizer.AddButton(button_cancel)
+        button_sizer.Realize()
+
+        sizer = wx.BoxSizer(wx.VERTICAL)
+        sizer.Add(self.combo_target, 0, wx.EXPAND)
+        sizer.Add(self.text_state, 0, wx.EXPAND)
+        sizer.Add(self.combo_refer, 0, wx.EXPAND)
+        sizer.Add(self.spind_base, 0, wx.EXPAND)
+        sizer.Add(self.spind_accum, 0, wx.EXPAND)
+        sizer.Add(self.text_comment, 0, wx.EXPAND)
+
+        sizer.Add(button_sizer, 0, wx.EXPAND)
+        self.SetSizer(sizer)
+        self.editable(flag=False)
+
+    def editable(self, flag=False):
+        if flag:
+            self.text_state.Enable()
+            self.combo_refer.Enable()
+            self.spind_base.Enable()
+            self.spind_accum.Enable()
+            self.text_comment.Enable()
+
+        else:
+            self.text_state.Disable()
+            self.combo_refer.Disable()
+            self.spind_base.Disable()
+            self.spind_accum.Disable()
+            self.text_comment.Disable()
+
+    def change_combo_target(self, event):
+        obj = event.GetEventObject()
+        selection_id = obj.GetSelection()
+        if selection_id > -1:
+            target = self.combo_target.GetClientData(selection_id)
+            self.combo_refer.Clear()
+            self.combo_refer.Append('', None)
+            for target_data in target.datas:
+                self.combo_refer.Append(target_data.state, target_data)
+            self.combo_refer.SetStringSelection('')
+
+            self.editable(True)
+        else:
+            self.editable(False)
+
+    def get_data(self):
+        selection_target = self.combo_target.GetSelection()
+        if selection_target > -1:
+            target = self.combo_target.GetClientData(selection_target)
+        else:
+            target = None
+        selection_refer = self.combo_refer.GetSelection()
+        if selection_refer > -1:
+            refer = self.combo_refer.GetClientData(selection_refer)
+        else:
+            refer = None
+        result_data = {
+            'target': target,
+            'refer': refer,
+            'state': self.text_state.GetValue(),
+            'base': self.spind_base.GetValue(),
+            'accum': self.spind_accum.GetValue(),
+            'comment': self.text_comment.GetValue(),
+        }
+        return result_data
+
+class TargetDataUpdateDialog(wx.Dialog):
+    def __init__(self, controller, target_data):
+        wx.Dialog.__init__(self, None, -1, '更新', size=(400, 300))
+        target_types = controller.get_target_types()
+
+        self.target = target_data.target
+        self.target_id = self.target.id
+        self.target_data_id = target_data.id
+
+        self.text_name = wx.StaticText(self, wx.ID_ANY, str(self.target.name))
+        self.combo_type = wx.ComboBox(self, wx.ID_ANY, '', style=wx.CB_READONLY)
+        for target_type in target_types:
+            self.combo_type.Append(target_type.name ,target_type)
+        self.combo_type.SetStringSelection(self.target.type.name)
+        self.combo_type.Disable()
+
+        self.text_state = wx.TextCtrl(self, wx.ID_ANY, target_data.state)
+        self.combo_refer = wx.ComboBox(self, wx.ID_ANY, '', style=wx.CB_READONLY)
+        self.combo_refer.Append('', None)
+        for _target_data in self.target.datas:
+            if _target_data.id == target_data.id:
+                continue
+            self.combo_refer.Append(_target_data.state, _target_data)
+        refer_default_state = '' if target_data.refer is None else target_data.refer.state
+        self.combo_refer.SetStringSelection(refer_default_state)
 
         self.spind_base = wx.SpinCtrlDouble(self, wx.ID_ANY, inc=0.1, min=-30.0, max=40.0, value=str(target_data.base))
         self.spind_accum = wx.SpinCtrlDouble(self, wx.ID_ANY, inc=0.1, min=0.0, max=10000.0, value=str(target_data.accum))
-        self.text_comment = wx.TextCtrl(self, -1, target.comment)
+        self.text_comment = wx.TextCtrl(self, -1, target_data.comment)
 
         button_ok = wx.Button(self, wx.ID_OK)
         button_ok.SetDefault()
@@ -436,6 +672,8 @@ class TargetUpdateDialog(wx.Dialog):
         sizer = wx.BoxSizer(wx.VERTICAL)
         sizer.Add(self.text_name, 0, wx.EXPAND)
         sizer.Add(self.combo_type, 0, wx.EXPAND)
+        sizer.Add(self.text_state, 0, wx.EXPAND)
+        sizer.Add(self.combo_refer, 0, wx.EXPAND)
         sizer.Add(self.spind_base, 0, wx.EXPAND)
         sizer.Add(self.spind_accum, 0, wx.EXPAND)
         sizer.Add(self.text_comment, 0, wx.EXPAND)
@@ -455,7 +693,7 @@ class TargetUpdateDialog(wx.Dialog):
             _type = None
         result_data = {
             'id': self.target_id,
-            'name': self.text_name.GetValue(),
+            'name': self.text_name.GetLabel(),
             'type': _type,
             'base': self.spind_base.GetValue(),
             'accum': self.spind_accum.GetValue(),
@@ -480,13 +718,17 @@ class MainFrame(wx.Frame):
         # メニューバーの作成
         menubar = wx.MenuBar()
         menu_file = wx.Menu()
-        menu_file.Append(1, 'Finish')
-        menubar.Append(menu_file, 'File')
+        menu_file.Append(1, '修了(未実装)')
+        menubar.Append(menu_file, 'ファイル')
 
         menu_edit = wx.Menu()
-        menu_add_target = menu_edit.Append(-1, '生物追加')
+        menu_add_target = menu_edit.Append(-1, '生物情報追加')
+        menu_update_target = menu_edit.Append(-1, '生物情報更新(数値以外)') # 後々必要なくなる可能性あり
+        menu_add_target_data = menu_edit.Append(-1, '指定した生物に基準を追加')
         self.Bind(wx.EVT_MENU, self.add_target, menu_add_target)
-        menubar.Append(menu_edit, 'Edit')
+        self.Bind(wx.EVT_MENU, self.update_target, menu_update_target)
+        self.Bind(wx.EVT_MENU, self.add_target_data, menu_add_target_data)
+        menubar.Append(menu_edit, '編集')
         self.SetMenuBar(menubar)
 
         # panel_headerの作成
@@ -505,7 +747,7 @@ class MainFrame(wx.Frame):
 
         self.table = TemperatureTableGrid(self.panel_table, table_data)
         self.table.freeze_table(row=1, col=4)
-        self.table.Bind(wx.grid.EVT_GRID_CELL_LEFT_DCLICK, self.update_target)
+        self.table.Bind(wx.grid.EVT_GRID_CELL_LEFT_DCLICK, self.update_target_data)
 
         # layout設定 ############################################
         # panel_h_messageのレイアウト設定
@@ -570,7 +812,7 @@ class MainFrame(wx.Frame):
         result = dialog.ShowModal()
         while result == wx.ID_OK:
             data = dialog.get_data()
-            if target_data_check(data):
+            if target_add_check(data):
                 self.controller.registor_target(data)
                 self.update_show_data()
                 break
@@ -579,13 +821,51 @@ class MainFrame(wx.Frame):
         dialog.Destroy()
     
     def update_target(self, event):
+        """
+        ターゲットを更新する機能
+        """
+        dialog = TargetUpdateDialog(self.controller)
+        result = dialog.ShowModal()
+        while result == wx.ID_OK:
+            update_data = dialog.get_data()
+            if target_check(update_data):
+                self.controller.update_target(update_data)
+                self.update_show_data()
+                break
+            wx.MessageBox('入力エラーがあります', '入力エラー')
+            result = dialog.ShowModal()
+        # print(result)
+        if result == wx.ID_DELETE:
+            delete_data = dialog.get_data()
+            delete_target_id = delete_data['id']
+            # self.controller.delete_target(delete_target_id)
+            self.update_show_data()
+        dialog.Destroy()
+    
+    def add_target_data(self, event):
+        """
+        ターゲットデータを追加する機能
+        """
+        dialog = TargetDataAddDialog(self.controller)
+        result = dialog.ShowModal()
+        while result == wx.ID_OK:
+            data = dialog.get_data()
+            if target_data_check(data):
+                self.controller.registor_target_data(data)
+                self.update_show_data()
+                break
+            wx.MessageBox('入力エラーがあります', '入力エラー')
+            result = dialog.ShowModal()
+        dialog.Destroy()
+
+    def update_target_data(self, event):
         row = event.GetRow()
         if row == 0:
             return
         
         target_id = int(self.table.GetRowLabelValue(row))
-        target = self.controller.get_target(target_id)
-        dialog = TargetUpdateDialog(self.controller, target)
+        target_data = self.controller.get_target_data(target_id)
+        dialog = TargetDataUpdateDialog(self.controller, target_data)
         result = dialog.ShowModal()
         while result == wx.ID_OK:
             update_data = dialog.get_data()
@@ -611,16 +891,45 @@ class MainFrame(wx.Frame):
         self.static_text_message.SetLabelText(message)
         self.panel_table.SendSizeEvent()
 
-
-def target_data_check(data):
+def target_add_check(data):
     if data['name'] is None or len(data['name']) == 0:
         print('error name')
         return False
     if data['type'] is None or not isinstance(data['type'], db.TargetTypeModel):
         print('error type')
         return False
+    if data['state'] is None or len(data['state']) == 0:
+        print('error state')
+        return False
     if data['base'] is None or not isinstance(data['base'], float):
-        print('error base', type(data['base']))
+        print('error base')
+        return False
+    if data['accum'] is None or not isinstance(data['accum'], float):
+        print('error accum')
+        return False
+    return True
+
+def target_check(data):
+    if data['name'] is None or len(data['name']) == 0:
+        print('error name')
+        return False
+    if data['type'] is None or not isinstance(data['type'], db.TargetTypeModel):
+        print('error type')
+        return False
+    return True
+
+def target_data_check(data):
+    if data['target'] is None or not isinstance(data['target'], db.TargetModel):
+        print('error target')
+        return False
+    if data['refer'] is not None and not isinstance(data['refer'], db.TargetDataModel):
+        print('error refer')
+        return False
+    if data['state'] is None or len(data['state']) == 0:
+        print('error state')
+        return False
+    if data['base'] is None or not isinstance(data['base'], float):
+        print('error base')
         return False
     if data['accum'] is None or not isinstance(data['accum'], float):
         print('error accum')
@@ -676,7 +985,7 @@ if __name__ == '__main__':
     # アプリケーション起動
     application = wx.App()
     controller = Controller(conn, today, criteria_day, proxies)
-    frame = MainFrame(None, wx.ID_ANY, 'Effective integrated temperature', size=(800, 600), controller=controller, debug=debug)
+    frame = MainFrame(None, wx.ID_ANY, '有効積算温度チェックツール', size=(800, 600), controller=controller, debug=debug)
     frame.Show()
     application.MainLoop()
 

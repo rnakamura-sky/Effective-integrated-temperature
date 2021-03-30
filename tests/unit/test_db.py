@@ -442,6 +442,68 @@ def test_get_targets(get_db):
         assert target_data.accum == _temp_data.accum
         assert target_data.comment == _temp_data.comment
 
+def test_get_target_data(get_db):
+    """
+    ターゲットデータを取得する機能テスト
+    """
+    conn = get_db
+    target_type = db.get_target_type(conn, id=1)
+    target_data_1 = db.TargetDataModel(
+        id=-1,
+        target=None,
+        refer=None,
+        state='TEST1',
+        base=10.0,
+        accum=100.0,
+        comment='TEST1'
+    )
+    target_data_2 = db.TargetDataModel(
+        id=-1,
+        target=None,
+        refer=None,
+        state='TEST2',
+        base=20.0,
+        accum=200.0,
+        comment='TEST2'
+    )
+    target = db.TargetModel(
+        id=-1,
+        name='TEST TARGET',
+        type=target_type,
+        datas=[target_data_1, target_data_2],
+        comment='TEST'
+    )
+    target_data_1.target = target
+    target_data_2.target = target
+
+    db.insert_target(conn, target)
+
+    result_target_data = db.get_target_data(conn, target_data_1.id)
+
+    result_target = result_target_data.target
+
+    cursor = conn.cursor()
+
+    target_data_dict = {td.id: td for td in target.datas}
+
+    assert result_target is not None
+    assert result_target.id == target.id
+    assert result_target.name == target.name
+    assert result_target.type.id == target.type.id
+    assert result_target.comment == target.comment
+    assert len(result_target.datas) == len(target.datas)
+    for _result_target_data in result_target.datas:
+        _target_data  = target_data_dict[_result_target_data.id]
+        assert _target_data is not None
+        assert _result_target_data.id == _target_data.id
+        assert _result_target_data.target.id == _target_data.target.id
+        assert _result_target_data.state == _target_data.state
+        assert _result_target_data.refer == _target_data.refer
+        assert _result_target_data.base == _target_data.base
+        assert _result_target_data.accum == _target_data.accum
+        assert _result_target_data.comment == _target_data.comment
+
+
 def test_insert_target_data(get_db):
     """
     ターゲットデータを作成する機能テスト
