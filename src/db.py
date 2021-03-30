@@ -401,7 +401,6 @@ def get_target(conn, id):
         target_data_dict[target_data.id] = target_data
     target_datas = []
     for tmp in target_data_dict.values():
-        print(tmp.refer)
         if tmp.refer is not None:
             tmp.refer = target_data_dict[tmp.refer]
         target_datas.append(tmp)
