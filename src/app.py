@@ -5,6 +5,7 @@
 # import sqlite3
 import datetime
 import os
+from logging import getLogger, basicConfig, DEBUG
 from collections import namedtuple
 import pandas as pd
 import wx
@@ -14,7 +15,10 @@ import db
 import scraping
 from controllers import Controller
 
-
+log_format = '[%(asctime)s][%(levelname)s] %(message)s'
+date_format = '%Y/%m/%d %H:%M:%S %p'
+basicConfig(filename='log.txt', fromat=log_format, datefmt=date_format, level=DEBUG)
+logger = getLogger(__name__)
 
 InputTarget = namedtuple('InputTarget',
     ['type', 'name', 'comment', 'datas'])
@@ -127,8 +131,6 @@ class TemperatureTableGrid(wx.grid.Grid):
             temp_sum_before_10days = row[1][-10]
             alert_temp = 10.0
 
-
-            # print(base, accum, temp_sum, temp_sum_before_10days)
             if len(target_name) != 0:
                 target_count += 1
 
