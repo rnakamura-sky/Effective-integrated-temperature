@@ -14,7 +14,7 @@ class TemperatureModel():
         self.id = id
         self.date = date
         self.temp = temp
-    
+
     def __str__(self):
         return f'Id:{self.id} Date:{self.date} Temp:{self.temp}'
 
@@ -27,7 +27,7 @@ class TargetTypeModel():
         self.id = id
         self.name = name
         self.comment = comment
-    
+
     def __str__(self):
         return f'Id:{self.id} Name:{self.name} Comment:{self.comment}'
 
@@ -36,13 +36,14 @@ class TargetModel():
     """
     ターゲットを管理するためのモデル
     """
-    def __init__(self, id:int=-1, name:str='', type:TargetTypeModel=None, datas:list=None, comment:str=''):
+    def __init__(self, id:int=-1, name:str='', type:TargetTypeModel=None,
+            datas:list=None, comment:str=''):
         self.id = id
         self.name = name
         self.type = type
         self.datas = datas
         self.comment = comment
-    
+
     def __str__(self):
         return f'Id:{self.id} Name:{self.name} Comment:{self.comment}'
 
@@ -50,7 +51,8 @@ class TargetDataModel():
     """
     ターゲット内でのデータを管理するためのモデル
     """
-    def __init__(self, id:int=-1, target:TargetModel=None, refer=None, state:str='', base:float=0.0, accum:float=0.0, comment:str=''):
+    def __init__(self, id:int=-1, target:TargetModel=None, refer=None,
+            state:str='', base:float=0.0, accum:float=0.0, comment:str=''):
         self.id = id
         self.target = target
         self.refer = refer
@@ -60,8 +62,9 @@ class TargetDataModel():
         self.comment = comment
 
     def __str__(self):
-        return f'Id:{self.id} State:{self.state} Base:{self.base} Accum:{self.accum} Comment:{self.comment}'
-
+        result = f'Id:{self.id} State:{self.state} Base:{self.base} ' \
+            + f'Accum:{self.accum} Comment:{self.comment}'
+        return result
 
 def get_connection(db_name):
     """
@@ -128,7 +131,7 @@ def insert_temperature(conn, data:TemperatureModel):
     data.id = _id
     return data
 
-def get_target_type(conn, id):
+def get_target_type(conn, target_type_id):
     """
     ターゲットタイプを取得します。
     """
@@ -138,7 +141,7 @@ def get_target_type(conn, id):
         'SELECT * '
         'FROM TargetType '
         'WHERE Id = ?;',
-        (id,))
+        (target_type_id,))
     result = cursor.fetchone()
     target_type = TargetTypeModel(
         id=result['Id'],
@@ -160,7 +163,7 @@ def get_target_types(conn):
         data = dict(row)
         target_type = TargetTypeModel(data['Id'], data['Name'], data['Comment'])
         results.append(target_type)
-    
+
     cursor.close()
 
     return results
@@ -206,7 +209,7 @@ def insert_target(conn, target):
 
     return target
 
-def get_target_data(conn, id):
+def get_target_data(conn, target_data_id):
     """
     ターゲットデータを取得する
     """
@@ -216,7 +219,7 @@ def get_target_data(conn, id):
         'SELECT * '
         'FROM TargetData '
         'WHERE Id = ?;',
-        (id, )
+        (target_data_id,)
     )
     result = cursor.fetchone()
     target_id = result['Target']
@@ -227,10 +230,10 @@ def get_target_data(conn, id):
     result_target_data = None
 
     for _target_data in target.datas:
-        if _target_data.id == id:
+        if _target_data.id == target_data_id:
             result_target_data = _target_data
             break
-    
+
     return result_target_data
 
 
@@ -358,7 +361,7 @@ def update_target(conn, target):
 
     return target
 
-def get_target(conn, id):
+def get_target(conn, target_id):
     """
     ターゲットを取得する
     """
@@ -368,14 +371,14 @@ def get_target(conn, id):
         'SELECT * '
         'FROM Target '
         'WHERE Id = ?;',
-        (id,)
+        (target_id,)
     )
     result = cursor.fetchone()
     cursor.execute(
         'SELECT * '
         'FROM TargetData '
         'WHERE Target = ?;',
-        (id, )
+        (target_id, )
     )
     result_datas = cursor.fetchall()
 
@@ -387,6 +390,7 @@ def get_target(conn, id):
         type=target_type,
         comment=result['Comment']
     )
+
     target_data_dict = dict()
     for result_data in result_datas:
         target_data = TargetDataModel(
@@ -431,14 +435,13 @@ def get_temperature_info(conn, base_day:date):
         temps.append(temp)
 
     cursor.close()
-    
+
     return temps
 
 def get_targets(conn):
     """
     ターゲットの一覧を取得します。
     """
-
     # 先にターゲットタイプを取得しておきます。
     target_types = get_target_types(conn)
     # 扱いやすいようdictに変換
@@ -460,7 +463,6 @@ def get_targets(conn):
         )
         result_dict[target.id] = target
 
-    target_datas = []
     cursor.execute('SELECT * FROM TargetData;')
     result_data_dict = dict()
     for row in cursor.fetchall():
@@ -474,7 +476,7 @@ def get_targets(conn):
             accum=data['Accumulation'],
             comment=data['Comment']
         )
-        result_data_dict[target_data.id] = target_data    
+        result_data_dict[target_data.id] = target_data
 
     for data in result_data_dict.values():
         if data.refer is not None:
@@ -482,10 +484,8 @@ def get_targets(conn):
         target = result_dict[data.target]
         data.target = target
         target.datas.append(data)
-    
+
     results = list(result_dict.values())
     cursor.close()
 
     return results
-
-

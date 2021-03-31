@@ -1,1 +1,7 @@
-init-hook='./src'
+[MASTER]
+init-hook='import sys; sys.path.append("./src")'
+
+extension-pkg-whitelist=wx
+
+# wxpythonの継承の抑制
+max-parents=15 
