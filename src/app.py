@@ -17,7 +17,8 @@ from controllers import Controller
 
 log_format = '[%(asctime)s][%(levelname)s] %(message)s'
 date_format = '%Y/%m/%d %H:%M:%S %p'
-basicConfig(filename='log.txt', fromat=log_format, datefmt=date_format, level=DEBUG)
+# basicConfig(filename='log.txt', fromat=log_format, datefmt=date_format, level=DEBUG)
+basicConfig(filename='log.txt', datefmt=date_format, level=DEBUG)
 logger = getLogger(__name__)
 
 InputTarget = namedtuple('InputTarget',
@@ -225,17 +226,22 @@ class TargetAddDialog(wx.Dialog):
     ターゲットを登録するダイアログ
     """
     def __init__(self, controller):
-        wx.Dialog.__init__(self, None, -1, '生物追加', size=(400, 300))
+        wx.Dialog.__init__(self, None, -1, '虫・植物情報追加', size=(400, 300))
 
         target_types = controller.get_target_types()
-
+        label_name = wx.StaticText(self, wx.ID_ANY, '虫・植物名')
         self.text_name = wx.TextCtrl(self)
+        label_type = wx.StaticText(self, wx.ID_ANY, 'タイプ')
         self.combo_type = wx.ComboBox(self, wx.ID_ANY, '', style=wx.CB_READONLY)
         for target_type in target_types:
             self.combo_type.Append(target_type.name ,target_type)
+        label_state = wx.StaticText(self, wx.ID_ANY, '状態')
         self.text_state = wx.TextCtrl(self, wx.ID_ANY, '標準')
+        label_base = wx.StaticText(self, wx.ID_ANY, 'ゼロ点')
         self.spind_base = wx.SpinCtrlDouble(self, wx.ID_ANY, '0.0', inc=0.1, min=-30.0, max=40.0)
+        label_accum = wx.StaticText(self, wx.ID_ANY, '有効積算温度')
         self.spind_accum = wx.SpinCtrlDouble(self, wx.ID_ANY, '0.0', inc=0.1, min=0.0, max=10000.0)
+        label_comment = wx.StaticText(self, wx.ID_ANY, 'コメント')
         self.text_comment = wx.TextCtrl(self)
 
         button_ok = wx.Button(self, wx.ID_OK)
@@ -247,12 +253,28 @@ class TargetAddDialog(wx.Dialog):
         button_sizer.AddButton(button_cancel)
         button_sizer.Realize()
 
+        sizer_name = wx.BoxSizer(wx.VERTICAL)
+        sizer_name.Add(label_name, 0, wx.EXPAND)
+        sizer_name.Add(self.text_name, 0, wx.EXPAND)
+
+        sizer_type = wx.BoxSizer(wx.HORIZONTAL)
+        sizer_type.Add(label_type, 0, wx.EXPAND)
+        sizer_type.Add(self.combo_type, 0, wx.EXPAND)
+
         sizer = wx.BoxSizer(wx.VERTICAL)
-        sizer.Add(self.text_name, 0, wx.EXPAND)
-        sizer.Add(self.combo_type, 0, wx.EXPAND)
+        # sizer.Add(label_name, 0, wx.EXPAND)
+        # sizer.Add(self.text_name, 0, wx.EXPAND)
+        sizer.Add(sizer_name, 0, wx.EXPAND)
+        # sizer.Add(label_type, 0, wx.EXPAND)
+        # sizer.Add(self.combo_type, 0, wx.EXPAND)
+        sizer.Add(sizer_type, 0, wx.EXPAND)
+        sizer.Add(label_state, 0, wx.EXPAND)
         sizer.Add(self.text_state, 0, wx.EXPAND)
+        sizer.Add(label_base, 0, wx.EXPAND)
         sizer.Add(self.spind_base, 0, wx.EXPAND)
+        sizer.Add(label_accum, 0, wx.EXPAND)
         sizer.Add(self.spind_accum, 0, wx.EXPAND)
+        sizer.Add(label_comment, 0, wx.EXPAND)
         sizer.Add(self.text_comment, 0, wx.EXPAND)
 
         sizer.Add(button_sizer, 0, wx.EXPAND)
@@ -282,7 +304,7 @@ class TargetUpdateDialog(wx.Dialog):
     ターゲットを更新するダイアログ
     """
     def __init__(self, controller):
-        wx.Dialog.__init__(self, None, -1, '更新', size=(400, 300))
+        wx.Dialog.__init__(self, None, -1, '虫・植物情報更新', size=(400, 300))
 
         targets = controller.get_targets()
         target_types = controller.get_target_types()
@@ -392,7 +414,7 @@ class TargetDataAddDialog(wx.Dialog):
     ターゲットデータ登録ダイアログ
     """
     def __init__(self, controller):
-        wx.Dialog.__init__(self, None, -1, '基準を追加', size=(400, 300))
+        wx.Dialog.__init__(self, None, -1, '基準追加', size=(400, 300))
 
         targets = controller.get_targets()
 
@@ -495,7 +517,7 @@ class TargetDataUpdateDialog(wx.Dialog):
     ターゲットデータ更新用ダイアログ
     """
     def __init__(self, controller, target_data):
-        wx.Dialog.__init__(self, None, -1, '更新', size=(400, 300))
+        wx.Dialog.__init__(self, None, -1, '基準更新', size=(400, 300))
         target_types = controller.get_target_types()
 
         self.target = target_data.target
@@ -604,9 +626,9 @@ class MainFrame(wx.Frame):
         menubar.Append(menu_file, 'ファイル')
 
         menu_edit = wx.Menu()
-        menu_add_target = menu_edit.Append(-1, '生物情報追加')
-        menu_update_target = menu_edit.Append(-1, '生物情報更新(数値以外)') # 後々必要なくなる可能性あり
-        menu_add_target_data = menu_edit.Append(-1, '指定した生物に基準を追加')
+        menu_add_target = menu_edit.Append(-1, '虫・植物情報作成')
+        menu_update_target = menu_edit.Append(-1, '虫・植物情報更新(数値以外)') # 後々必要なくなる可能性あり
+        menu_add_target_data = menu_edit.Append(-1, '虫・植物に基準を追加')
         self.Bind(wx.EVT_MENU, self.add_target, menu_add_target)
         self.Bind(wx.EVT_MENU, self.update_target, menu_update_target)
         self.Bind(wx.EVT_MENU, self.add_target_data, menu_add_target_data)
@@ -640,7 +662,6 @@ class MainFrame(wx.Frame):
         panel_h_message.SetSizer(layout_h_message)
 
         # panel_h_updateのレイアウト設定
-        # layout_h_update = wx.BoxSizer(wx.VERTICAL)
         box_h_update = wx.StaticBox(panel_h_update, wx.ID_ANY, 'update')
         layout_h_update = wx.StaticBoxSizer(box_h_update, wx.VERTICAL)
         layout_h_update.Add(self.button_temperature)
