@@ -5,6 +5,7 @@
 # import sqlite3
 import datetime
 import os
+from collections import namedtuple
 import pandas as pd
 import wx
 import wx.grid
@@ -13,6 +14,10 @@ import db
 from db import get_connection, db_init, insert_temperature, TemperatureModel, db_insert_default_values
 import scraping
 
+
+
+InputTarget = namedtuple('InputTarget', ['type', 'name', 'comment', 'datas'])
+InputTargetData = namedtuple('InputTargetData', ['id', 'refer', 'state', 'base', 'accum', 'comment'])
 
 def create_default_target(conn):
     """
@@ -23,51 +28,64 @@ def create_default_target(conn):
     # target_type取得
     target_types = db.get_target_types(conn)
     target_type_dict = {tt.name: tt for tt in target_types}
-    target_list = [
-        db.TargetModel(type=target_type_dict['虫'], name='ブドウトラカミキリ　卵～', comment='ブドウトラカミキリ　卵～',
-                    datas=[db.TargetDataModel(refer=None, state='卵～', base=9.7, accum=114.1, comment='')]),
-        db.TargetModel(type=target_type_dict['虫'], name='ブドウトラカミキリ　卵～成虫羽化', comment='ブドウトラカミキリ　卵～成虫羽化',
-                    datas=[db.TargetDataModel(refer=None, state='卵～成虫羽化', base=8.0, accum=408.4, comment='')]),
-        db.TargetModel(type=target_type_dict['虫'], name='クワコナカイガラムシ　卵～', comment='クワコナカイガラムシ　卵～',
-                    datas=[db.TargetDataModel(refer=None, state='卵～', base=12.3, accum=127.0, comment='')]),
-        db.TargetModel(type=target_type_dict['虫'], name='クワコナカイガラムシ　雌幼虫～成虫羽化', comment='クワコナカイガラムシ　雌幼虫～成虫羽化',
-                    datas=[db.TargetDataModel(refer=None, state='雌幼虫～成虫羽化', base=10.8, accum=346.0, comment='')]),
-        db.TargetModel(type=target_type_dict['虫'], name='クワコナカイガラムシ　幼虫～産卵前期', comment='クワコナカイガラムシ　幼虫～産卵前期',
-                    datas=[db.TargetDataModel(refer=None, state='幼虫～産卵前期', base=9.7, accum=549.0, comment='')]),
-        db.TargetModel(type=target_type_dict['虫'], name='ミカンキイロアザミウマ　卵～', comment='ミカンキイロアザミウマ　卵～',
-                    datas=[db.TargetDataModel(refer=None, state='卵～', base=9.2, accum=50.0, comment='')]),
-        db.TargetModel(type=target_type_dict['虫'], name='ミカンキイロアザミウマ　幼虫～蛹', comment='ミカンキイロアザミウマ　幼虫～蛹',
-                    datas=[db.TargetDataModel(refer=None, state='幼虫～蛹', base=9.0, accum=90.3, comment='')]),
-        db.TargetModel(type=target_type_dict['虫'], name='ミカンキイロアザミウマ　蛹～羽化', comment='ミカンキイロアザミウマ　蛹～羽化',
-                    datas=[db.TargetDataModel(refer=None, state='蛹～羽化', base=9.8, accum=66.7, comment='')]),
-        db.TargetModel(type=target_type_dict['虫'], name='ミカンキイロアザミウマ　幼虫～成虫羽化', comment='ミカンキイロアザミウマ　幼虫～成虫羽化',
-                    datas=[db.TargetDataModel(refer=None, state='幼虫～成虫羽化', base=9.5, accum=194.0, comment='')]),
-        db.TargetModel(type=target_type_dict['虫'], name='チャノキイロアザミウマ（大阪）　卵～', comment='チャノキイロアザミウマ（大阪）　卵～',
-                    datas=[db.TargetDataModel(refer=None, state='卵～', base=9.5, accum=119.0, comment='')]),
-        db.TargetModel(type=target_type_dict['虫'], name='チャノキイロアザミウマ（大阪）　幼虫～成虫羽化', comment='チャノキイロアザミウマ（大阪）　幼虫～成虫羽化',
-                    datas=[db.TargetDataModel(refer=None, state='幼虫～成虫羽化', base=7.7, accum=181.8, comment='')]),
-        db.TargetModel(type=target_type_dict['虫'], name='チャノキイロアザミウマ（静岡）　卵～成虫羽化', comment='チャノキイロアザミウマ（静岡）　卵～成虫羽化',
-                    datas=[db.TargetDataModel(refer=None, state='卵～成虫羽化', base=9.7, accum=265.0, comment='')]),
-        db.TargetModel(type=target_type_dict['虫'], name='フタテンヒメヨコバイ　卵～', comment='フタテンヒメヨコバイ　卵～',
-                    datas=[db.TargetDataModel(refer=None, state='卵～', base=10.8, accum=125.0, comment='')]),
-        db.TargetModel(type=target_type_dict['虫'], name='フタテンヒメヨコバイ　幼虫～成虫羽化', comment='フタテンヒメヨコバイ　幼虫～成虫羽化',
-                    datas=[db.TargetDataModel(refer=None, state='幼虫～成虫羽化', base=13.0, accum=200.0, comment='')]),
-        db.TargetModel(type=target_type_dict['虫'], name='フタテンヒメヨコバイ　卵～成虫羽化', comment='フタテンヒメヨコバイ　卵～成虫羽化',
-                    datas=[db.TargetDataModel(refer=None, state='卵～成虫羽化', base=11.0, accum=333.0, comment='')]),
-        db.TargetModel(type=target_type_dict['虫'], name='コウモリガ　卵～', comment='コウモリガ　卵～',
-                    datas=[db.TargetDataModel(refer=None, state='卵～', base=6.7, accum=200.0, comment='')]),
-        db.TargetModel(type=target_type_dict['虫'], name='コウモリガ　卵～4齢幼虫', comment='コウモリガ　卵～4齢幼虫',
-                    datas=[db.TargetDataModel(refer=None, state='卵～4齢幼虫', base=7.2, accum=390.0, comment='')]),
-        db.TargetModel(type=target_type_dict['虫'], name='ハスモンヨトウ　卵～', comment='ハスモンヨトウ　卵～',
-                    datas=[db.TargetDataModel(refer=None, state='卵～', base=10.1, accum=63.7, comment='')]),
-        db.TargetModel(type=target_type_dict['虫'], name='ハスモンヨトウ　卵～成虫羽化', comment='ハスモンヨトウ　卵～成虫羽化',
-                    datas=[db.TargetDataModel(refer=None, state='卵～成虫羽化', base=10.3, accum=526.3, comment='')]),
-        db.TargetModel(type=target_type_dict['虫'], name='ハスモンヨトウ　卵～卵', comment='ハスモンヨトウ　卵～',
-                    datas=[db.TargetDataModel(refer=None, state='卵～卵', base=10.3, accum=628.7, comment='')]),
+    input_target_list = [
+        InputTarget(type='虫', name='ブドウトラカミキリ', comment='ブドウトラカミキリ',
+                    datas=[InputTargetData(id=1, refer=None, state='卵～幼虫', base=9.7, accum=114.1, comment=''),
+                           InputTargetData(id=2, refer=None, state='卵～成虫羽化', base=8.0, accum=408.4, comment='')]),
+        InputTarget(type='虫', name='クワコナカイガラムシ', comment='クワコナカイガラムシ',
+                    datas=[InputTargetData(id=1, refer=None, state='卵～幼虫', base=12.3, accum=127.0, comment=''),
+                           InputTargetData(id=2, refer=1, state='幼虫～産卵前期', base=9.7, accum=549.0, comment=''),
+                           InputTargetData(id=3, refer=1, state='雌幼虫～成虫羽化', base=10.8, accum=346.0, comment='')]),
+        InputTarget(type='虫', name='ミカンキイロアザミウマ', comment='ミカンキイロアザミウマ',
+                    datas=[InputTargetData(id=1, refer=None, state='卵～幼虫', base=9.2, accum=50.0, comment=''),
+                           InputTargetData(id=2, refer=1, state='幼虫～蛹', base=9.0, accum=90.3, comment=''),
+                           InputTargetData(id=3, refer=2, state='蛹～羽化', base=9.8, accum=66.7, comment=''),
+                           InputTargetData(id=4, refer=1, state='幼虫～成虫羽化', base=9.5, accum=194.0, comment='')]),
+        InputTarget(type='虫', name='チャノキイロアザミウマ', comment='チャノキイロアザミウマ',
+                    datas=[InputTargetData(id=1, refer=None, state='（大阪）　卵～幼虫', base=9.5, accum=119.0, comment=''),
+                           InputTargetData(id=2, refer=1, state='（大阪）　幼虫～成虫羽化', base=7.7, accum=181.8, comment=''),
+                           InputTargetData(id=3, refer=None, state='（静岡）　卵～成虫羽化', base=9.7, accum=265.0, comment='')]),
+        InputTarget(type='虫', name='フタテンヒメヨコバイ', comment='フタテンヒメヨコバイ',
+                    datas=[InputTargetData(id=1, refer=None, state='卵～幼虫', base=10.8, accum=125.0, comment=''),
+                           InputTargetData(id=2, refer=1, state='幼虫～成虫羽化', base=13.0, accum=200.0, comment=''),
+                           InputTargetData(id=3, refer=None, state='卵～成虫羽化', base=11.0, accum=333.0, comment='')]),
+        InputTarget(type='虫', name='コウモリガ', comment='コウモリガ',
+                    datas=[InputTargetData(id=1, refer=None, state='卵～幼虫', base=6.7, accum=200.0, comment=''),
+                           InputTargetData(id=2, refer=None, state='卵～4齢幼虫', base=7.2, accum=390.0, comment='')]),
+        InputTarget(type='虫', name='ハスモンヨトウ', comment='ハスモンヨトウ',
+                    datas=[InputTargetData(id=1, refer=None, state='卵～幼虫', base=10.1, accum=63.7, comment=''),
+                           InputTargetData(id=2, refer=None, state='卵～成虫羽化', base=10.3, accum=526.3, comment=''),
+                           InputTargetData(id=3, refer=None, state='卵～卵', base=10.3, accum=628.7, comment='')]),
     ]
 
-    for target in target_list:
+    for in_target in input_target_list:
+        target_type = target_type_dict.get(in_target.type, None)
+        if target_type is None:
+            raise Error('指定したターゲットタイプが存在しません。')
+        target = db.TargetModel(
+            name=in_target.name,
+            type=target_type,
+            datas=[],
+            comment=in_target.comment
+        )
+
         db.insert_target(conn, target)
+
+        target_data_dict = dict()
+        for in_target_data in in_target.datas:
+            refer = None
+            if in_target_data.refer is not None:
+                refer = target_data_dict[in_target_data.refer]
+            target_data = db.TargetDataModel(
+                target=target,
+                refer=refer,
+                state=in_target_data.state,
+                base=in_target_data.base,
+                accum=in_target_data.accum,
+                comment=in_target_data.comment
+            )
+            db.insert_target_data(conn, target_data)
+            target_data_dict[in_target_data.id] = target_data
 
 
 class TemperatureTableGrid(wx.grid.Grid):
@@ -81,10 +99,12 @@ class TemperatureTableGrid(wx.grid.Grid):
 
         row, col = data.shape
         self.CreateGrid(row, col)
+        self.SetDefaultCellAlignment(horiz=wx.ALIGN_RIGHT, vert=wx.ALIGN_CENTRE)
+
         self._output_table(data)
 
         self.SetRowLabelAlignment(wx.ALIGN_LEFT, wx.ALIGN_CENTER)
-        # self.SetRowLabelSize(0)
+        self.SetRowLabelSize(0)
         self.AutoSize()
 
         self.freeze_info = None
@@ -92,17 +112,29 @@ class TemperatureTableGrid(wx.grid.Grid):
     def _output_table(self, data:pd.DataFrame):
         for i, column in enumerate(data.columns):
             self.SetColLabelValue(i, str(column))
+
         
+        target_count = 0
         for i, row in enumerate(data.iterrows()):
             
+            target_name = row[1][0]
             base = row[1][2]
             accum = row[1][3]
             temp_sum = row[1][4]
             temp_sum_before_10days = row[1][-10]
             alert_temp = 10.0
+
+
             # print(base, accum, temp_sum, temp_sum_before_10days)
+            if len(target_name) != 0:
+                target_count += 1 
 
             colour = (255, 255, 255, 255)
+            target_colour = (255, 255, 255, 255)
+            if target_count % 2 == 1:
+                colour = (225, 255, 255)
+                target_colour = (225, 255, 255)
+
             if i == 0:
                 colour = (200, 255, 255)
             elif accum > temp_sum and accum < temp_sum + alert_temp:
@@ -112,14 +144,21 @@ class TemperatureTableGrid(wx.grid.Grid):
             elif accum <= temp_sum:
                 colour = (100, 100, 100)
 
+
             self.SetRowLabelValue(i, str(row[0]))
             is_over_accum = False
             for j, cell in enumerate(row[1]):
                 self.SetCellValue(i, j, str(cell))
                 self.SetReadOnly(i, j, True)
 
+                # Alignment
+                if j < 2:
+                    self.SetCellAlignment(row=i, col=j, horiz=wx.ALIGN_LEFT, vert=wx.ALIGN_CENTER)
+
                 # 色付け
-                if not is_over_accum and i > 1 and j > 4 and float(cell) >= float(accum):
+                if i > 1 and j < 1:
+                    self.SetCellBackgroundColour(i, j, target_colour)
+                elif not is_over_accum and i > 1 and j > 4 and float(cell) >= float(accum):
                     self.SetCellBackgroundColour(i, j, wx.Colour("ORANGE"))
                     is_over_accum = True
                 else:
@@ -188,6 +227,7 @@ def calc_table_data(targets, temperatures) -> pd.DataFrame:
     df.loc[0] = row_temp
 
     for target in targets:
+        is_first = True
         for target_data in target.datas:
             calc_module = CalcTargetData(target_data, myself=True)
             target_temp_list = [0.0 for i in range(len(temp_list))]
@@ -196,8 +236,13 @@ def calc_table_data(targets, temperatures) -> pd.DataFrame:
                 # sum_value = sum_value + (temp - target_data.base) if temp > target_data.base else sum_value
                 sum_value = calc_module.calc_accum(temp)
                 target_temp_list[i] = round(sum_value, 1)
+            
+            if is_first:
+                row_target = [target.name, target_data.state, target_data.base, target_data.accum, round(target_temp_list[-1], 1)] + target_temp_list
+                is_first = False
+            else:
+                row_target = ['', target_data.state, target_data.base, target_data.accum, round(target_temp_list[-1], 1)] + target_temp_list
 
-            row_target = [target.name, target_data.state, target_data.base, target_data.accum, round(target_temp_list[-1], 1)] + target_temp_list
             df.loc[target_data.id] = row_target
     return df
 
