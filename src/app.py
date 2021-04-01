@@ -226,7 +226,7 @@ class TargetAddDialog(wx.Dialog):
     ターゲットを登録するダイアログ
     """
     def __init__(self, controller):
-        wx.Dialog.__init__(self, None, -1, '虫・植物情報追加', size=(400, 300))
+        wx.Dialog.__init__(self, None, -1, '虫・植物情報追加')
 
         target_types = controller.get_target_types()
         label_name = wx.StaticText(self, wx.ID_ANY, '虫・植物名')
@@ -253,32 +253,51 @@ class TargetAddDialog(wx.Dialog):
         button_sizer.AddButton(button_cancel)
         button_sizer.Realize()
 
-        sizer_name = wx.BoxSizer(wx.VERTICAL)
-        sizer_name.Add(label_name, 0, wx.EXPAND)
-        sizer_name.Add(self.text_name, 0, wx.EXPAND)
+        rate_title, rate_input = (1, 3)
+        sizer_name = wx.BoxSizer(wx.HORIZONTAL)
+        sizer_name.Add(label_name, rate_title, wx.EXPAND)
+        sizer_name.Add(self.text_name, rate_input, wx.EXPAND)
 
         sizer_type = wx.BoxSizer(wx.HORIZONTAL)
-        sizer_type.Add(label_type, 0, wx.EXPAND)
-        sizer_type.Add(self.combo_type, 0, wx.EXPAND)
+        sizer_type.Add(label_type, rate_title, wx.EXPAND)
+        sizer_type.Add(self.combo_type, rate_input, wx.EXPAND)
 
+        sizer_state = wx.BoxSizer(wx.HORIZONTAL)
+        sizer_state.Add(label_state, rate_title, wx.EXPAND)
+        sizer_state.Add(self.text_state, rate_input, wx.EXPAND)
+
+        sizer_base = wx.BoxSizer(wx.HORIZONTAL)
+        sizer_base.Add(label_base, rate_title, wx.EXPAND)
+        sizer_base.Add(self.spind_base, rate_input, wx.EXPAND)
+
+        sizer_accum = wx.BoxSizer(wx.HORIZONTAL)
+        sizer_accum.Add(label_accum, rate_title, wx.EXPAND)
+        sizer_accum.Add(self.spind_accum, rate_input, wx.EXPAND)
+
+        sizer_comment = wx.BoxSizer(wx.HORIZONTAL)
+        sizer_comment.Add(label_comment, rate_title, wx.EXPAND)
+        sizer_comment.Add(self.text_comment, rate_input, wx.EXPAND)
+
+        margin_horizontal, margin_top, margin_vertical = 10, 20, 10
         sizer = wx.BoxSizer(wx.VERTICAL)
-        # sizer.Add(label_name, 0, wx.EXPAND)
-        # sizer.Add(self.text_name, 0, wx.EXPAND)
-        sizer.Add(sizer_name, 0, wx.EXPAND)
-        # sizer.Add(label_type, 0, wx.EXPAND)
-        # sizer.Add(self.combo_type, 0, wx.EXPAND)
-        sizer.Add(sizer_type, 0, wx.EXPAND)
-        sizer.Add(label_state, 0, wx.EXPAND)
-        sizer.Add(self.text_state, 0, wx.EXPAND)
-        sizer.Add(label_base, 0, wx.EXPAND)
-        sizer.Add(self.spind_base, 0, wx.EXPAND)
-        sizer.Add(label_accum, 0, wx.EXPAND)
-        sizer.Add(self.spind_accum, 0, wx.EXPAND)
-        sizer.Add(label_comment, 0, wx.EXPAND)
-        sizer.Add(self.text_comment, 0, wx.EXPAND)
+        sizer.Add((-1, margin_top))
+        sizer.Add(sizer_name, 0, wx.EXPAND | wx.LEFT | wx.RIGHT, margin_horizontal)
+        sizer.Add((-1, margin_vertical))
+        sizer.Add(sizer_type, 0, wx.EXPAND | wx.LEFT | wx.RIGHT, margin_horizontal)
+        sizer.Add((-1, margin_vertical))
+        sizer.Add(sizer_state, 0, wx.EXPAND | wx.LEFT | wx.RIGHT, margin_horizontal)
+        sizer.Add((-1, margin_vertical))
+        sizer.Add(sizer_base, 0, wx.EXPAND | wx.LEFT | wx.RIGHT, margin_horizontal)
+        sizer.Add((-1, margin_vertical))
+        sizer.Add(sizer_accum, 0, wx.EXPAND | wx.LEFT | wx.RIGHT, margin_horizontal)
+        sizer.Add((-1, margin_vertical))
+        sizer.Add(sizer_comment, 0, wx.EXPAND | wx.TOP | wx.LEFT | wx.RIGHT, 10)
 
-        sizer.Add(button_sizer, 0, wx.EXPAND)
+        sizer.Add(button_sizer, 1, wx.EXPAND)
         self.SetSizer(sizer)
+
+        self.Centre()
+        self.SetClientSize(self.GetBestSize())
 
     def get_data(self):
         """
@@ -309,19 +328,23 @@ class TargetUpdateDialog(wx.Dialog):
         targets = controller.get_targets()
         target_types = controller.get_target_types()
 
+        label_target = wx.StaticText(self, wx.ID_ANY, '更新する虫・植物を選択')
         self.combo_target = wx.ComboBox(self, wx.ID_ANY, '', style=wx.CB_READONLY)
         for target in targets:
             self.combo_target.Append(target.name, target)
         self.combo_target.Bind(wx.EVT_COMBOBOX, self.change_combo_target)
 
+        label_name = wx.StaticText(self, wx.ID_ANY, '虫・植物名')
         self.text_name = wx.TextCtrl(self, -1, '')
         self.text_name.Disable()
 
+        label_type = wx.StaticText(self, wx.ID_ANY, 'タイプ')
         self.combo_type = wx.ComboBox(self, wx.ID_ANY, '', style=wx.CB_READONLY)
         for target_type in target_types:
             self.combo_type.Append(target_type.name ,target_type)
         self.combo_type.Disable()
 
+        label_comment = wx.StaticText(self, wx.ID_ANY, 'コメント')
         self.text_comment = wx.TextCtrl(self, -1, '')
         self.text_comment.Disable()
 
@@ -337,18 +360,46 @@ class TargetUpdateDialog(wx.Dialog):
         # button_sizer.AddButton(button_delete)
         # button_sizer.Realize()
         button_sizer = wx.BoxSizer(wx.HORIZONTAL)
-        button_sizer.Add(button_ok)
-        button_sizer.Add(button_cancel)
-        button_sizer.Add(button_delete)
+        button_sizer.Add((-1, -1), 1)
+        button_sizer.Add(button_ok, 0)
+        button_sizer.Add(button_cancel, 0)
+        button_sizer.Add(button_delete, 0)
+
+        rate_title, rate_input = (1, 3)
+        sizer_target = wx.BoxSizer(wx.VERTICAL)
+        sizer_target.Add(label_target, rate_title, wx.EXPAND)
+        sizer_target.Add(self.combo_target, rate_title, wx.EXPAND)
+
+        sizer_name = wx.BoxSizer(wx.HORIZONTAL)
+        sizer_name.Add(label_name, rate_title, wx.EXPAND)
+        sizer_name.Add(self.text_name, rate_input, wx.EXPAND)
+
+        sizer_type = wx.BoxSizer(wx.HORIZONTAL)
+        sizer_type.Add(label_type, rate_title, wx.EXPAND)
+        sizer_type.Add(self.combo_type, rate_input, wx.EXPAND)
+
+        sizer_comment = wx.BoxSizer(wx.HORIZONTAL)
+        sizer_comment.Add(label_comment, rate_title, wx.EXPAND)
+        sizer_comment.Add(self.text_comment, rate_input, wx.EXPAND)
+
+        margin_horizontal, margin_top, margin_vertical = 10, 20, 10
 
         sizer = wx.BoxSizer(wx.VERTICAL)
-        sizer.Add(self.combo_target, 0, wx.EXPAND)
-        sizer.Add(self.text_name, 0, wx.EXPAND)
-        sizer.Add(self.combo_type, 0, wx.EXPAND)
-        sizer.Add(self.text_comment, 0, wx.EXPAND)
+        sizer.Add((-1, margin_vertical))
+        sizer.Add(sizer_target, 0, wx.EXPAND | wx.LEFT | wx.RIGHT, margin_horizontal)
+        sizer.Add((-1, margin_top))
+        sizer.Add(sizer_name, 0, wx.EXPAND | wx.LEFT | wx.RIGHT, margin_horizontal)
+        sizer.Add((-1, margin_vertical))
+        sizer.Add(sizer_type, 0, wx.EXPAND | wx.LEFT | wx.RIGHT, margin_horizontal)
+        sizer.Add((-1, margin_vertical))
+        sizer.Add(sizer_comment, 0, wx.EXPAND | wx.LEFT | wx.RIGHT, margin_horizontal)
+        sizer.Add((-1, margin_vertical))
 
-        sizer.Add(button_sizer, 0, wx.EXPAND)
+        sizer.Add(button_sizer, 0, wx.EXPAND | wx.ALL, margin_horizontal)
         self.SetSizer(sizer)
+
+        self.Centre()
+        self.SetClientSize(self.GetBestSize())
 
     def change_combo_target(self, event):
         """
@@ -414,21 +465,30 @@ class TargetDataAddDialog(wx.Dialog):
     ターゲットデータ登録ダイアログ
     """
     def __init__(self, controller):
-        wx.Dialog.__init__(self, None, -1, '基準追加', size=(400, 300))
+        wx.Dialog.__init__(self, None, -1, '基準追加')
 
         targets = controller.get_targets()
 
+        label_target = wx.StaticText(self, wx.ID_ANY, '基準を追加する虫・植物を選択')
         self.combo_target = wx.ComboBox(self, wx.ID_ANY, '', style=wx.CB_READONLY)
         for target in targets:
             self.combo_target.Append(str(target.name), target)
         self.combo_target.Bind(wx.EVT_COMBOBOX, self.change_combo_target)
 
+        label_state = wx.StaticText(self, wx.ID_ANY, '状態')
         self.text_state = wx.TextCtrl(self)
+
+        label_refer = wx.StaticText(self, wx.ID_ANY, '前の状態')
         self.combo_refer = wx.ComboBox(self, wx.ID_ANY, '', style=wx.CB_READONLY)
         self.combo_refer.Append('', None)
 
+        label_base = wx.StaticText(self, wx.ID_ANY, 'ゼロ点')
         self.spind_base = wx.SpinCtrlDouble(self, wx.ID_ANY, '0.0', inc=0.1, min=-30.0, max=40.0)
+
+        label_accum = wx.StaticText(self, wx.ID_ANY, '有効積算温度')
         self.spind_accum = wx.SpinCtrlDouble(self, wx.ID_ANY, '0.0', inc=0.1, min=0.0, max=10000.0)
+
+        label_comment = wx.StaticText(self, wx.ID_ANY, 'コメント')
         self.text_comment = wx.TextCtrl(self)
 
         button_ok = wx.Button(self, wx.ID_OK)
@@ -440,17 +500,53 @@ class TargetDataAddDialog(wx.Dialog):
         button_sizer.AddButton(button_cancel)
         button_sizer.Realize()
 
+        rate_title, rate_input = (1, 3)
+        sizer_target = wx.BoxSizer(wx.VERTICAL)
+        sizer_target.Add(label_target, rate_title, wx.EXPAND)
+        sizer_target.Add(self.combo_target, rate_title, wx.EXPAND)
+
+        sizer_state = wx.BoxSizer(wx.HORIZONTAL)
+        sizer_state.Add(label_state, rate_title, wx.EXPAND)
+        sizer_state.Add(self.text_state, rate_input, wx.EXPAND)
+
+        sizer_refer = wx.BoxSizer(wx.HORIZONTAL)
+        sizer_refer.Add(label_refer, rate_title, wx.EXPAND)
+        sizer_refer.Add(self.combo_refer, rate_input, wx.EXPAND)
+
+        sizer_base = wx.BoxSizer(wx.HORIZONTAL)
+        sizer_base.Add(label_base, rate_title, wx.EXPAND)
+        sizer_base.Add(self.spind_base, rate_input, wx.EXPAND)
+
+        sizer_accum = wx.BoxSizer(wx.HORIZONTAL)
+        sizer_accum.Add(label_accum, rate_title, wx.EXPAND)
+        sizer_accum.Add(self.spind_accum, rate_input, wx.EXPAND)
+
+        sizer_comment = wx.BoxSizer(wx.HORIZONTAL)
+        sizer_comment.Add(label_comment, rate_title, wx.EXPAND)
+        sizer_comment.Add(self.text_comment, rate_input, wx.EXPAND)
+
+        margin_horizontal, margin_top, margin_vertical = 10, 20, 10
+
         sizer = wx.BoxSizer(wx.VERTICAL)
-        sizer.Add(self.combo_target, 0, wx.EXPAND)
-        sizer.Add(self.text_state, 0, wx.EXPAND)
-        sizer.Add(self.combo_refer, 0, wx.EXPAND)
-        sizer.Add(self.spind_base, 0, wx.EXPAND)
-        sizer.Add(self.spind_accum, 0, wx.EXPAND)
-        sizer.Add(self.text_comment, 0, wx.EXPAND)
+        sizer.Add((-1, margin_vertical))
+        sizer.Add(sizer_target, 0, wx.EXPAND | wx.LEFT | wx.RIGHT, margin_horizontal)
+        sizer.Add((-1, margin_top))
+        sizer.Add(sizer_state, 0, wx.EXPAND | wx.LEFT | wx.RIGHT, margin_horizontal)
+        sizer.Add((-1, margin_vertical))
+        sizer.Add(sizer_refer, 0, wx.EXPAND | wx.LEFT | wx.RIGHT, margin_horizontal)
+        sizer.Add((-1, margin_vertical))
+        sizer.Add(sizer_base, 0, wx.EXPAND | wx.LEFT | wx.RIGHT, margin_horizontal)
+        sizer.Add((-1, margin_vertical))
+        sizer.Add(sizer_accum, 0, wx.EXPAND | wx.LEFT | wx.RIGHT, margin_horizontal)
+        sizer.Add((-1, margin_vertical))
+        sizer.Add(sizer_comment, 0, wx.EXPAND | wx.LEFT | wx.RIGHT, margin_horizontal)
 
         sizer.Add(button_sizer, 0, wx.EXPAND)
         self.SetSizer(sizer)
         self.editable(flag=False)
+
+        self.Centre()
+        self.SetClientSize(self.GetBestSize())
 
     def editable(self, flag=False):
         """
@@ -518,20 +614,18 @@ class TargetDataUpdateDialog(wx.Dialog):
     """
     def __init__(self, controller, target_data):
         wx.Dialog.__init__(self, None, -1, '基準更新', size=(400, 300))
-        target_types = controller.get_target_types()
 
         self.target = target_data.target
         self.target_id = self.target.id
         self.target_data_id = target_data.id
 
+        label_name = wx.StaticText(self, wx.ID_ANY, '名前')
         self.text_name = wx.StaticText(self, wx.ID_ANY, str(self.target.name))
-        self.combo_type = wx.ComboBox(self, wx.ID_ANY, '', style=wx.CB_READONLY)
-        for target_type in target_types:
-            self.combo_type.Append(target_type.name ,target_type)
-        self.combo_type.SetStringSelection(self.target.type.name)
-        self.combo_type.Disable()
 
+        label_state = wx.StaticText(self, wx.ID_ANY, '状態')
         self.text_state = wx.TextCtrl(self, wx.ID_ANY, target_data.state)
+        
+        label_refer = wx.StaticText(self, wx.ID_ANY, '前の状態')
         self.combo_refer = wx.ComboBox(self, wx.ID_ANY, '', style=wx.CB_READONLY)
         self.combo_refer.Append('', None)
         for _target_data in self.target.datas:
@@ -541,10 +635,15 @@ class TargetDataUpdateDialog(wx.Dialog):
         refer_default_state = '' if target_data.refer is None else target_data.refer.state
         self.combo_refer.SetStringSelection(refer_default_state)
 
+        label_base = wx.StaticText(self, wx.ID_ANY, 'ゼロ点')
         self.spind_base = wx.SpinCtrlDouble(self, wx.ID_ANY, inc=0.1, min=-30.0, max=40.0, \
                                                 value=str(target_data.base))
+
+        label_accum = wx.StaticText(self, wx.ID_ANY, '有効積算温度')
         self.spind_accum = wx.SpinCtrlDouble(self, wx.ID_ANY, inc=0.1, min=0.0, max=10000.0, \
                                                 value=str(target_data.accum))
+
+        label_comment = wx.StaticText(self, wx.ID_ANY, 'コメント')
         self.text_comment = wx.TextCtrl(self, -1, target_data.comment)
 
         button_ok = wx.Button(self, wx.ID_OK)
@@ -553,27 +652,60 @@ class TargetDataUpdateDialog(wx.Dialog):
         button_delete = wx.Button(self, wx.ID_DELETE)
         button_delete.Bind(wx.EVT_BUTTON, self.close_dialog)
 
-        # button_sizer = wx.StdDialogButtonSizer()
-        # button_sizer.AddButton(button_ok)
-        # button_sizer.AddButton(button_cancel)
-        # button_sizer.AddButton(button_delete)
-        # button_sizer.Realize()
         button_sizer = wx.BoxSizer(wx.HORIZONTAL)
-        button_sizer.Add(button_ok)
-        button_sizer.Add(button_cancel)
-        button_sizer.Add(button_delete)
+        button_sizer.Add((-1, -1), 1)
+        button_sizer.Add(button_ok, 0)
+        button_sizer.Add(button_cancel, 0)
+        button_sizer.Add(button_delete, 0)
+
+        rate_title, rate_input = (1, 3)
+
+        sizer_name = wx.BoxSizer(wx.HORIZONTAL)
+        sizer_name.Add(label_name, rate_title, wx.EXPAND)
+        sizer_name.Add(self.text_name, rate_input, wx.EXPAND)
+
+        sizer_state = wx.BoxSizer(wx.HORIZONTAL)
+        sizer_state.Add(label_state, rate_title, wx.EXPAND)
+        sizer_state.Add(self.text_state, rate_input, wx.EXPAND)
+
+        sizer_refer = wx.BoxSizer(wx.HORIZONTAL)
+        sizer_refer.Add(label_refer, rate_title, wx.EXPAND)
+        sizer_refer.Add(self.combo_refer, rate_input, wx.EXPAND)
+
+        sizer_base = wx.BoxSizer(wx.HORIZONTAL)
+        sizer_base.Add(label_base, rate_title, wx.EXPAND)
+        sizer_base.Add(self.spind_base, rate_input, wx.EXPAND)
+
+        sizer_accum = wx.BoxSizer(wx.HORIZONTAL)
+        sizer_accum.Add(label_accum, rate_title, wx.EXPAND)
+        sizer_accum.Add(self.spind_accum, rate_input, wx.EXPAND)
+
+        sizer_comment = wx.BoxSizer(wx.HORIZONTAL)
+        sizer_comment.Add(label_comment, rate_title, wx.EXPAND)
+        sizer_comment.Add(self.text_comment, rate_input, wx.EXPAND)
+
+        margin_horizontal, margin_top, margin_vertical = 10, 20, 10
 
         sizer = wx.BoxSizer(wx.VERTICAL)
-        sizer.Add(self.text_name, 0, wx.EXPAND)
-        sizer.Add(self.combo_type, 0, wx.EXPAND)
-        sizer.Add(self.text_state, 0, wx.EXPAND)
-        sizer.Add(self.combo_refer, 0, wx.EXPAND)
-        sizer.Add(self.spind_base, 0, wx.EXPAND)
-        sizer.Add(self.spind_accum, 0, wx.EXPAND)
-        sizer.Add(self.text_comment, 0, wx.EXPAND)
+        sizer.Add((-1, margin_top))
+        sizer.Add(sizer_name, 0, wx.EXPAND | wx.LEFT | wx.RIGHT, margin_horizontal)
+        sizer.Add((-1, margin_vertical))
+        sizer.Add(sizer_state, 0, wx.EXPAND | wx.LEFT | wx.RIGHT, margin_horizontal)
+        sizer.Add((-1, margin_vertical))
+        sizer.Add(sizer_refer, 0, wx.EXPAND | wx.LEFT | wx.RIGHT, margin_horizontal)
+        sizer.Add((-1, margin_vertical))
+        sizer.Add(sizer_base, 0, wx.EXPAND | wx.LEFT | wx.RIGHT, margin_horizontal)
+        sizer.Add((-1, margin_vertical))
+        sizer.Add(sizer_accum, 0, wx.EXPAND | wx.LEFT | wx.RIGHT, margin_horizontal)
+        sizer.Add((-1, margin_vertical))
+        sizer.Add(sizer_comment, 0, wx.EXPAND | wx.LEFT | wx.RIGHT, margin_horizontal)
+        sizer.Add((-1, margin_vertical))
 
-        sizer.Add(button_sizer, 0, wx.EXPAND)
+        sizer.Add(button_sizer, 0, wx.EXPAND | wx.ALL, margin_horizontal)
         self.SetSizer(sizer)
+
+        self.Centre()
+        self.SetClientSize(self.GetBestSize())
 
     def close_dialog(self, event):
         """
@@ -744,7 +876,7 @@ class MainFrame(wx.Frame):
                 break
             wx.MessageBox('入力エラーがあります', '入力エラー')
             result = dialog.ShowModal()
-        # print(result)
+        print(result)
         if result == wx.ID_DELETE:
             delete_data = dialog.get_data()
             delete_target_id = delete_data['id']
@@ -790,7 +922,7 @@ class MainFrame(wx.Frame):
             result = dialog.ShowModal()
         if result == wx.ID_DELETE:
             delete_data = dialog.get_data()
-            delete_target_id = delete_data['id']
+            delete_target_id = delete_data['data_id']
             self.controller.delete_target(delete_target_id)
             self.update_show_data()
         dialog.Destroy()
