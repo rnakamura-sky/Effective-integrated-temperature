@@ -5,7 +5,8 @@
 # import sqlite3
 import datetime
 import os
-from logging import getLogger, basicConfig, DEBUG
+from logging import getLogger
+import logging.config
 from collections import namedtuple
 import pandas as pd
 import wx
@@ -15,11 +16,11 @@ import db
 import scraping
 from controllers import Controller
 
-log_format = '[%(asctime)s][%(levelname)s] %(message)s'
-date_format = '%Y/%m/%d %H:%M:%S %p'
-# basicConfig(filename='log.txt', fromat=log_format, datefmt=date_format, level=DEBUG)
-basicConfig(filename='log.txt', datefmt=date_format, level=DEBUG)
+
+# logging.config.fileConfig('logging.conf')
+logging.config.fileConfig('logging_debug.conf')
 logger = getLogger(__name__)
+
 
 InputTarget = namedtuple('InputTarget',
     ['type', 'name', 'comment', 'datas'])
@@ -624,7 +625,7 @@ class TargetDataUpdateDialog(wx.Dialog):
 
         label_state = wx.StaticText(self, wx.ID_ANY, '状態')
         self.text_state = wx.TextCtrl(self, wx.ID_ANY, target_data.state)
-        
+
         label_refer = wx.StaticText(self, wx.ID_ANY, '前の状態')
         self.combo_refer = wx.ComboBox(self, wx.ID_ANY, '', style=wx.CB_READONLY)
         self.combo_refer.Append('', None)
@@ -876,7 +877,7 @@ class MainFrame(wx.Frame):
                 break
             wx.MessageBox('入力エラーがあります', '入力エラー')
             result = dialog.ShowModal()
-        print(result)
+        logger.info(result)
         if result == wx.ID_DELETE:
             delete_data = dialog.get_data()
             delete_target_id = delete_data['id']
@@ -943,20 +944,21 @@ def target_add_check(data):
     登録するターゲットの入力チェック
     """
     if data['name'] is None or len(data['name']) == 0:
-        print('error name')
+        logger.info('error name', extra={'time': str(datetime.datetime.now())})
         return False
     if data['type'] is None or not isinstance(data['type'], db.TargetTypeModel):
-        print('error type')
+        logger.info('error type')
         return False
     if data['state'] is None or len(data['state']) == 0:
-        print('error state')
+        logger.info('error state')
         return False
     if data['base'] is None or not isinstance(data['base'], float):
-        print('error base')
+        logger.info('error base')
         return False
     if data['accum'] is None or not isinstance(data['accum'], float):
-        print('error accum')
+        logger.info('error accum')
         return False
+    print('...')
     return True
 
 def target_check(data):
@@ -964,10 +966,10 @@ def target_check(data):
     ターゲットの入力チェック
     """
     if data['name'] is None or len(data['name']) == 0:
-        print('error name')
+        logger.info('error name')
         return False
     if data['type'] is None or not isinstance(data['type'], db.TargetTypeModel):
-        print('error type')
+        logger.info('error type')
         return False
     return True
 
@@ -976,19 +978,19 @@ def target_data_check(data):
     登録するターゲットデータの入力チェック
     """
     if data['target'] is None or not isinstance(data['target'], db.TargetModel):
-        print('error target')
+        logger.info('error target')
         return False
     if data['refer'] is not None and not isinstance(data['refer'], db.TargetDataModel):
-        print('error refer')
+        logger.info('error refer')
         return False
     if data['state'] is None or len(data['state']) == 0:
-        print('error state')
+        logger.info('error state')
         return False
     if data['base'] is None or not isinstance(data['base'], float):
-        print('error base')
+        logger.info('error base')
         return False
     if data['accum'] is None or not isinstance(data['accum'], float):
-        print('error accum')
+        logger.info('error accum')
         return False
     return True
 
@@ -1047,10 +1049,16 @@ def run(debug):
     frame = MainFrame(None, wx.ID_ANY, application_name, size=(800, 600), \
                     controller=controller, debug=debug)
     frame.Show()
+    # 時刻処理がエラーとなってしまうためロケールをリセット
+    application.ResetLocale()
+
     application.MainLoop()
 
     conn.close()
 
 
 if __name__ == '__main__':
+
+    logger.info('application start running.', extra={'time': str(datetime.datetime.now())})
     run(debug=True)
+    logger.info('application stop.', extra={'time': str(datetime.datetime.now())})
