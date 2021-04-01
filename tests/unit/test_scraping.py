@@ -34,13 +34,13 @@ reg_datas = [
 @pytest.mark.parametrize('day, answer', temperature_datas)
 def test_get_temperature(day, answer):
     """
-    スクレイピイングによる平均気温情報取得機能テスト
+    スクレイピイングによる日毎の平均気温情報取得機能テスト
     """
     time.sleep(2.0) 
     
     proxies = {
-        'http': os.environ['http_proxy'],
-        'https': os.environ['https_proxy'],
+        'http': os.environ.get('http_proxy'),
+        'https': os.environ.get('https_proxy'),
     }
     scrape_temp = scraping.ScrapeTemp()
     result = scrape_temp.get_temperature(day, proxies=proxies)
@@ -48,13 +48,32 @@ def test_get_temperature(day, answer):
     assert isinstance(result, float)
     assert result == answer
 
+
+def test_get_average(day, answer):
+    """
+    スクレイピングによる平均気温情報取得
+    """
+    time.sleep(2.0) 
+    
+    proxies = {
+        'http': os.environ.get('http_proxy'),
+        'https': os.environ.get('https_proxy'),
+    }
+    scrape_temp = scraping.ScrapeTemp()
+    result = scrape_temp.get_average_temperature(day, proxies=proxies)
+
+    assert isinstance(result, float)
+    assert result == answer
+
+
+
 def test_get_temperature_cache():
     """
     キャッシュ機能が正常に動作するかテスト
     """
     proxies = {
-        'http': os.environ['http_proxy'],
-        'https': os.environ['https_proxy'],
+        'http': os.environ.get('http_proxy'),
+        'https': os.environ.get('https_proxy'),
     }
     scrape_temp = scraping.ScrapeTemp()
     for date, answer in temperature_datas:

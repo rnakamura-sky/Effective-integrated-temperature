@@ -362,7 +362,7 @@ def test_delete_target(get_db):
     ターゲット削除機能テスト
     """
     conn = get_db
-    target_type = db.get_target_type(conn, id=1)
+    target_type = db.get_target_type(conn, target_type_id=1)
     target_data = db.TargetDataModel(
         id=-1,
         target=None,
@@ -447,7 +447,7 @@ def test_get_target_data(get_db):
     ターゲットデータを取得する機能テスト
     """
     conn = get_db
-    target_type = db.get_target_type(conn, id=1)
+    target_type = db.get_target_type(conn, target_type_id=1)
     target_data_1 = db.TargetDataModel(
         id=-1,
         target=None,
@@ -509,7 +509,7 @@ def test_insert_target_data(get_db):
     ターゲットデータを作成する機能テスト
     """
     conn = get_db
-    target_type = db.get_target_type(conn, id=1)
+    target_type = db.get_target_type(conn, target_type_id=1)
     target_data = db.TargetDataModel(
         id=-1,
         target=None,
@@ -565,7 +565,7 @@ def test_update_target_data(get_db):
     ターゲットデータを更新する機能テスト
     """
     conn = get_db
-    target_type = db.get_target_type(conn, id=1)
+    target_type = db.get_target_type(conn, target_type_id=1)
     target_data = db.TargetDataModel(
         id=-1,
         target=None,
@@ -621,7 +621,7 @@ def test_delete_target_data(get_db):
     ターゲットデータ削除機能テスト
     """
     conn = get_db
-    target_type = db.get_target_type(conn, id=1)
+    target_type = db.get_target_type(conn, target_type_id=1)
     target_data1 = db.TargetDataModel(
         id=-1,
         target=None,
