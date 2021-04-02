@@ -4,9 +4,9 @@
 """
 import os
 import datetime
+import time
 import pytest
 import scraping
-import time
 
 temperature_datas = [
     (datetime.date(year=2021, month=3, day=14), 11.8),
@@ -19,6 +19,20 @@ temperature_datas = [
     (datetime.date(year=2021, month=1, day=10), -0.8),
     (datetime.date(year=2021, month=1, day=11), -1.0),
     (datetime.date(year=2021, month=1, day=12), -0.1),
+]
+
+average_temperature_datas = [
+    (datetime.date(year=2021, month=3, day=14), 7.7),
+    (datetime.date(year=2021, month=3, day=5), 6.4),
+    (datetime.date(year=2021, month=1, day=20), 2.6),
+    (datetime.date(year=2019, month=1, day=20), 2.6),
+    (datetime.date(year=2020, month=10, day=29), 13.8),
+    (datetime.date(year=2019, month=12, day=20), 4.3),
+    (datetime.date(year=2020, month=10, day=27), 14.2),
+    (datetime.date(year=2021, month=1, day=9), 3.0),
+    (datetime.date(year=2021, month=1, day=10), 2.9),
+    (datetime.date(year=2021, month=1, day=11), 2.9),
+    (datetime.date(year=2021, month=1, day=12), 2.9),
 ]
 
 reg_datas = [
@@ -36,8 +50,8 @@ def test_get_temperature(day, answer):
     """
     スクレイピイングによる日毎の平均気温情報取得機能テスト
     """
-    time.sleep(2.0) 
-    
+    time.sleep(2.0)
+
     proxies = {
         'http': os.environ.get('http_proxy'),
         'https': os.environ.get('https_proxy'),
@@ -48,13 +62,13 @@ def test_get_temperature(day, answer):
     assert isinstance(result, float)
     assert result == answer
 
-
+@pytest.mark.parametrize('day, answer', average_temperature_datas)
 def test_get_average(day, answer):
     """
     スクレイピングによる平均気温情報取得
     """
-    time.sleep(2.0) 
-    
+    time.sleep(2.0)
+
     proxies = {
         'http': os.environ.get('http_proxy'),
         'https': os.environ.get('https_proxy'),
@@ -64,7 +78,6 @@ def test_get_average(day, answer):
 
     assert isinstance(result, float)
     assert result == answer
-
 
 
 def test_get_temperature_cache():
@@ -78,6 +91,20 @@ def test_get_temperature_cache():
     scrape_temp = scraping.ScrapeTemp()
     for date, answer in temperature_datas:
         result = scrape_temp.get_temperature(date, proxies=proxies)
+        assert isinstance(result, float)
+        assert result == answer
+
+def test_get_average_temperature_cache():
+    """
+    キャッシュ機能が正常に動作するかテスト
+    """
+    proxies = {
+        'http': os.environ.get('http_proxy'),
+        'https': os.environ.get('https_proxy'),
+    }
+    scrape_temp = scraping.ScrapeTemp()
+    for date, answer in average_temperature_datas:
+        result = scrape_temp.get_average_temperature(date, proxies=proxies)
         assert isinstance(result, float)
         assert result == answer
 
