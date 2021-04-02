@@ -2,12 +2,15 @@
 """
 スクレイピングして気温を取得する機能
 """
-import time
+from collections import namedtuple
 import datetime
 import re
+import time
 import requests
 from bs4 import BeautifulSoup
 
+Prefecture = namedtuple('Prefecture', ['code', 'name'])
+Block = namedtuple('Block', ['pref_code', 'code', 'name'])
 
 class ScrapeTemp():
     """
@@ -21,11 +24,19 @@ class ScrapeTemp():
         self.prefecture = prefecture
         self.location = location
 
-        self.template_url = 'https://www.data.jma.go.jp/obd/stats/etrn/view/daily_s1.php?' \
-                            'prec_no={prefecture}&block_no={location}&year={year}&month={month}&day={day}&view='
-        self.template_average_url = 'https://www.data.jma.go.jp/obd/stats/etrn/view/nml_sfc_d.php?' \
-                                    'prec_no={prefecture}&block_no={location}&year={year}&month={month}&day={day}&view=p1'
+        self.template_url = \
+            'https://www.data.jma.go.jp/obd/stats/etrn/view/daily_s1.php?' \
+            'prec_no={prefecture}&block_no={location}&year={year}&month={month}&day={day}&view='
+        self.template_average_url = \
+            'https://www.data.jma.go.jp/obd/stats/etrn/view/nml_sfc_d.php?' \
+            'prec_no={prefecture}&block_no={location}&year={year}&month={month}&day={day}&view=p1'
+        self.prefecture_url = \
+            'https://www.data.jma.go.jp/obd/stats/etrn/select/prefecture00.php?' \
+            'prec_no=&block_no=&year=&month=&day=&view=p1'
 
+        self.template_block_url = \
+            'https://www.data.jma.go.jp/obd/stats/etrn/select/prefecture.php?' \
+            'prec_no={prefecture}&block_no=&year=&month=&day=&view=p1'
         # スクレイピング用の設定
         self.data_start_row = 3
         self.temp_idx = 5
@@ -67,7 +78,8 @@ class ScrapeTemp():
                 if  interval > 0:
                     time.sleep(interval)
 
-            rows_data = self._fetch_month_data(self.template_average_url, date=date, proxies=proxies)
+            rows_data = self._fetch_month_data(self.template_average_url,
+                                               date=date, proxies=proxies)
             # キャッシュにデータを格納します。
             self.average_cache = {
                 'month': month,
@@ -112,7 +124,7 @@ class ScrapeTemp():
                 interval = self.load_interval - (current_time - self.load_time)
                 if  interval > 0:
                     time.sleep(interval)
-            
+
             rows_data = self._fetch_month_data(self.template_url, date=date, proxies=proxies)
             # キャッシュにデータを格納します。
             self.cache = {
@@ -154,7 +166,7 @@ class ScrapeTemp():
         rows = table.find_all('tr')
 
         return rows
-    
+
     def _get_float_value(self, value:str):
         """
         スクレイピングで取得した文字から数値データを取得します。
@@ -164,3 +176,103 @@ class ScrapeTemp():
 
         return float(re_value)
 
+    def get_prefecture_list(self, proxies):
+        """
+        都府県・地方の一覧を取得します。
+        """
+        if proxies is None:
+            proxies = {
+                'http': '',
+                'https': '',
+            }
+        # お作法としてアクセス間隔を空けます。
+        if self.load_time is not None:
+            current_time = time.perf_counter()
+            interval = self.load_interval - (current_time - self.load_time)
+            if  interval > 0:
+                time.sleep(interval)
+
+        load_url = self.prefecture_url
+        html = requests.get(load_url, proxies=proxies)
+        self.load_time = time.perf_counter()
+
+        pattern = r'^.*prec_no=(\d+).*$'
+        matcher = re.compile(pattern)
+
+        soup = BeautifulSoup(html.content, 'html.parser')
+        map_japan = soup.find('map')
+        area_datas = map_japan.find_all('area')
+        result_list = []
+
+        for area_data in area_datas:
+            name = area_data.attrs['alt']
+            url = area_data.attrs['href']
+            match = matcher.match(url)
+            if match:
+                code = match.group(1)
+            else:
+                code = None
+
+            pref = Prefecture(code=code, name=name)
+            result_list.append(pref)
+
+        return result_list
+
+
+    def get_block_list(self, pref_code, proxies):
+        """
+        地点の一覧を取得します。
+        """
+        if proxies is None:
+            proxies = {
+                'http': '',
+                'https': '',
+            }
+        # お作法としてアクセス間隔を空けます。
+        if self.load_time is not None:
+            current_time = time.perf_counter()
+            interval = self.load_interval - (current_time - self.load_time)
+            if  interval > 0:
+                time.sleep(interval)
+
+        url_data = {
+            'prefecture': pref_code
+        }
+        load_url = self.template_block_url.format(**url_data)
+        html = requests.get(load_url, proxies=proxies)
+        self.load_time = time.perf_counter()
+
+        pref_pattern = r'^.*prec_no=(\d+).*$'
+        block_pattern = r'^.*block_no=(\d+).*$'
+        pref_matcher = re.compile(pref_pattern)
+        block_matcher = re.compile(block_pattern)
+
+        soup = BeautifulSoup(html.content, 'html.parser')
+        map_japan = soup.find('map')
+        area_datas = map_japan.find_all('area')
+        result_list = []
+
+        for area_data in area_datas:
+            name = area_data.attrs['alt']
+            url = area_data.attrs['href']
+            match = pref_matcher.match(url)
+            if match:
+                _pref_code = match.group(1)
+            else:
+                continue
+
+            match = block_matcher.match(url)
+            if match:
+                code = match.group(1)
+            else:
+                continue
+
+            # codeが'00'の時は～全域という名前なので取得しない。
+            if code == '00':
+                continue
+
+            block = Block(pref_code=_pref_code, code=code, name=name)
+            if block not in result_list:
+                result_list.append(block)
+
+        return result_list

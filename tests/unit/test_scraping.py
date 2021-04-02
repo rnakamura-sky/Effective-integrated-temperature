@@ -45,17 +45,24 @@ reg_datas = [
     ('-11.8 ]', -11.8),
 ]
 
+@pytest.fixture()
+def proxies():
+    """
+    プロキシを環境変数から取得するフィクスチャです。
+    """
+    result = {
+        'http': os.environ.get('http_proxy'),
+        'https': os.environ.get('https_proxy'),
+    }
+    return result
+
 @pytest.mark.parametrize('day, answer', temperature_datas)
-def test_get_temperature(day, answer):
+def test_get_temperature(proxies, day, answer):
     """
     スクレイピイングによる日毎の平均気温情報取得機能テスト
     """
     time.sleep(2.0)
 
-    proxies = {
-        'http': os.environ.get('http_proxy'),
-        'https': os.environ.get('https_proxy'),
-    }
     scrape_temp = scraping.ScrapeTemp()
     result = scrape_temp.get_temperature(day, proxies=proxies)
 
@@ -63,16 +70,12 @@ def test_get_temperature(day, answer):
     assert result == answer
 
 @pytest.mark.parametrize('day, answer', average_temperature_datas)
-def test_get_average(day, answer):
+def test_get_average(proxies, day, answer):
     """
     スクレイピングによる平均気温情報取得
     """
     time.sleep(2.0)
 
-    proxies = {
-        'http': os.environ.get('http_proxy'),
-        'https': os.environ.get('https_proxy'),
-    }
     scrape_temp = scraping.ScrapeTemp()
     result = scrape_temp.get_average_temperature(day, proxies=proxies)
 
@@ -80,28 +83,22 @@ def test_get_average(day, answer):
     assert result == answer
 
 
-def test_get_temperature_cache():
+def test_get_temperature_cache(proxies):
     """
     キャッシュ機能が正常に動作するかテスト
     """
-    proxies = {
-        'http': os.environ.get('http_proxy'),
-        'https': os.environ.get('https_proxy'),
-    }
+
     scrape_temp = scraping.ScrapeTemp()
     for date, answer in temperature_datas:
         result = scrape_temp.get_temperature(date, proxies=proxies)
         assert isinstance(result, float)
         assert result == answer
 
-def test_get_average_temperature_cache():
+def test_get_average_temperature_cache(proxies):
     """
     キャッシュ機能が正常に動作するかテスト
     """
-    proxies = {
-        'http': os.environ.get('http_proxy'),
-        'https': os.environ.get('https_proxy'),
-    }
+
     scrape_temp = scraping.ScrapeTemp()
     for date, answer in average_temperature_datas:
         result = scrape_temp.get_average_temperature(date, proxies=proxies)
@@ -117,3 +114,34 @@ def test_get_float_value(value, answer):
     result = scrape_temp._get_float_value(value)
     assert isinstance(result, float)
     assert result == answer
+
+def test_get_prefecture_list(proxies):
+    """
+    都府県・地方のデータ取得テスト
+    """
+    time.sleep(2.0)
+
+    check_prefecture = scraping.Prefecture(code='49', name='山梨県')
+    scrape_temp = scraping.ScrapeTemp()
+
+    result_list = scrape_temp.get_prefecture_list(proxies=proxies)
+
+    assert isinstance(result_list, list)
+    assert isinstance(result_list[0], scraping.Prefecture)
+    assert check_prefecture in result_list
+
+def test_get_block_list(proxies):
+    """
+    都府県・地方のデータ取得テスト
+    """
+    time.sleep(2.0)
+
+    check_block = scraping.Block(pref_code='49', code='47638', name='甲府')
+
+    scrape_temp = scraping.ScrapeTemp()
+
+    result_list = scrape_temp.get_block_list(pref_code=check_block.pref_code, proxies=proxies)
+
+    assert isinstance(result_list, list)
+    assert isinstance(result_list[0], scraping.Block)
+    assert check_block in result_list
