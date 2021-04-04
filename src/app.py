@@ -15,6 +15,7 @@ import wx.lib.scrolledpanel
 import db
 import scraping
 from controllers import Controller
+import config
 
 
 # logging.config.fileConfig('logging.conf')
@@ -994,23 +995,17 @@ def target_data_check(data):
         return False
     return True
 
-def run(debug):
+def run(config, proxies, debug):
     """
     実行関数
     """
-
-    proxies = {
-        'http': os.environ.get('http_proxy'),
-        'https': os.environ.get('https_proxy'),
-    }
-
     # 基準となる日付を取得
     today = datetime.date.today()
     criteria_day = datetime.date(year=today.year, month=1, day=1)
 
 
     # 設定ファイル等を格納するためのフォルダ指定
-    instance_path = './instance'
+    instance_path = os.path.join(os.path.dirname(__file__), 'instance')
     if not os.path.exists(instance_path):
         os.mkdir(instance_path)
 
@@ -1045,7 +1040,7 @@ def run(debug):
     # アプリケーション起動
     application_name = '有効積算温度チェックツール'
     application = wx.App()
-    controller = Controller(conn, today, criteria_day, proxies)
+    controller = Controller(conn, today, criteria_day, config, proxies)
     frame = MainFrame(None, wx.ID_ANY, application_name, size=(800, 600), \
                     controller=controller, debug=debug)
     frame.Show()
@@ -1059,6 +1054,23 @@ def run(debug):
 
 if __name__ == '__main__':
 
+    proxies = {
+        'http': os.environ.get('http_proxy'),
+        'https': os.environ.get('https_proxy'),
+    }
+
+    # 設定ファイルを読み込みます。
+    config_file = 'config.ini'
+    config = config.Config(config_file)
+    config.load()
+
+    if config.debug().upper == 'TRUE':
+        debug = True
+    else:
+        debug = False
+
     logger.info('application start running.', extra={'time': str(datetime.datetime.now())})
-    run(debug=True)
+    run(config, proxies=proxies, debug=debug)
     logger.info('application stop.', extra={'time': str(datetime.datetime.now())})
+
+    config.save()

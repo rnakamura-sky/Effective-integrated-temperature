@@ -90,12 +90,15 @@ class Controller():
     """
     GUIからのリクエストをビジネスロジックをつなぐコントローラー
     """
-    def __init__(self, conn, current_day, criteria_day, proxies):
+    def __init__(self, conn, current_day, criteria_day, config, proxies):
         self.conn = conn
         self.current_day = current_day
         self.criteria_day = criteria_day
+        self.config = config
         self.proxies = proxies
-        self.scrape_temp = scraping.ScrapeTemp()
+
+        location = config.get_location()
+        self.scrape_temp = scraping.ScrapeTemp(location['prefecture'], location['block'])
 
         self.targets = None
         self.target_types = None

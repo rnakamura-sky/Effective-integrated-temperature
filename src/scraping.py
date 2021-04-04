@@ -16,20 +16,20 @@ class ScrapeTemp():
     """
     気象庁から気温データを取得するための機能
     """
-    def __init__(self, prefecture:int=49, location:int=47638):
+    def __init__(self, prefecture:str='49', block:str='47638'):
         """
         初期化
         取得する気温の場所はデフォルトとして山梨県の甲府としています。
         """
         self.prefecture = prefecture
-        self.location = location
+        self.block = block
 
         self.template_url = \
             'https://www.data.jma.go.jp/obd/stats/etrn/view/daily_s1.php?' \
-            'prec_no={prefecture}&block_no={location}&year={year}&month={month}&day={day}&view='
+            'prec_no={prefecture}&block_no={block}&year={year}&month={month}&day={day}&view='
         self.template_average_url = \
             'https://www.data.jma.go.jp/obd/stats/etrn/view/nml_sfc_d.php?' \
-            'prec_no={prefecture}&block_no={location}&year={year}&month={month}&day={day}&view=p1'
+            'prec_no={prefecture}&block_no={block}&year={year}&month={month}&day={day}&view=p1'
         self.prefecture_url = \
             'https://www.data.jma.go.jp/obd/stats/etrn/select/prefecture00.php?' \
             'prec_no=&block_no=&year=&month=&day=&view=p1'
@@ -154,7 +154,7 @@ class ScrapeTemp():
 
         url_data = {
             'prefecture': self.prefecture,
-            'location': self.location,
+            'block': self.block,
             'year': year,
             'month': month,
             'day': day,
